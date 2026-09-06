@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Heart, Menu, Minus, Plus, Search, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import { Heart, Menu, Minus, Plus, Search, ShoppingBag, X } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { getProduct, products, useStore, type Product } from "@/lib/storefront";
 
-const nav = [{ label: "Shop", to: "/shop" }, { label: "Categories", to: "/categories" }, { label: "Solutions", to: "/solutions" }, { label: "Learn", to: "/learn" }, { label: "About", to: "/about" }];
+type StorefrontPath = "/" | "/shop" | "/categories" | "/solutions" | "/learn" | "/about" | "/contact" | "/cart" | "/checkout" | "/wishlist" | "/account";
+const nav = [{ label: "Shop", to: "/shop" }, { label: "Categories", to: "/categories" }, { label: "Solutions", to: "/solutions" }, { label: "Learn", to: "/learn" }, { label: "About", to: "/about" }] as const;
 
 export function SiteHeader() {
   const { cartCount, wishlist } = useStore();
@@ -14,7 +15,7 @@ export function SiteHeader() {
       <Link to="/" className="font-display text-2xl font-semibold tracking-[0.22em]">EVERGREEN <span className="text-gold">MEDIA</span></Link>
       <nav className="hidden items-center gap-8 text-[11px] uppercase tracking-[0.2em] text-ivory/70 md:flex">{nav.map((item) => <Link key={item.to} to={item.to} activeProps={{ className: "text-gold" }} className="transition-colors hover:text-ivory">{item.label}</Link>)}</nav>
       <div className="flex items-center gap-4 text-[11px] uppercase tracking-[0.2em]">
-        <Link to="/shop" search={{ q: "" }} className="hidden transition-colors hover:text-ivory sm:block"><Search className="mr-1 inline size-3.5" /> Search</Link>
+        <Link to="/shop" className="hidden transition-colors hover:text-ivory sm:block"><Search className="mr-1 inline size-3.5" /> Search</Link>
         <Link to="/wishlist" className="hidden transition-colors hover:text-gold sm:block">Wishlist <span className="text-gold">{wishlist.length}</span></Link>
         <Link to="/cart" className="transition-colors hover:text-ivory"><ShoppingBag className="mr-1 inline size-3.5" /> Cart <span className="text-gold">{cartCount}</span></Link>
         <Button variant="ghost" size="icon" className="text-ivory hover:bg-ivory/10 hover:text-ivory md:hidden" onClick={() => setOpen(!open)} aria-label="Open navigation">{open ? <X /> : <Menu />}</Button>
@@ -28,10 +29,10 @@ export function SiteFooter() {
   return <footer className="bg-forest-deep text-ivory"><div className="mx-auto grid max-w-[1440px] grid-cols-12 gap-8 px-6 py-16 lg:px-10"><div className="col-span-12 md:col-span-5"><Link to="/" className="font-display text-2xl font-semibold tracking-[0.22em]">EVERGREEN <span className="text-gold">MEDIA</span></Link><p className="mt-4 max-w-[34ch] text-sm leading-relaxed text-ivory/60">Premium agricultural inputs for healthier soil, stronger roots and thriving plants.</p></div><FooterColumn title="Shop" links={[["All Products", "/shop"], ["Categories", "/categories"], ["Solutions", "/solutions"]]} /><FooterColumn title="Company" links={[["About", "/about"], ["Learn", "/learn"], ["Contact", "/contact"]]} /><div className="col-span-12 md:col-span-3"><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-gold">Stay grounded</p><form className="mt-4 flex border-b border-ivory/30 focus-within:border-gold"><input aria-label="Email address" type="email" placeholder="Email address" className="w-full bg-transparent py-2 text-sm placeholder:text-ivory/40 focus:outline-none" /><button type="submit" className="text-[11px] uppercase tracking-[0.2em] text-gold">Join</button></form></div></div><div className="border-t border-ivory/10"><div className="mx-auto flex max-w-[1440px] flex-wrap justify-between gap-3 px-6 py-6 font-mono text-[10px] uppercase tracking-[0.2em] text-ivory/50 lg:px-10"><span>© 2026 Evergreen Media (MEX)</span><span>Privacy · Terms · Shipping</span></div></div></footer>;
 }
 
-function FooterColumn({ title, links }: { title: string; links: string[][] }) { return <div className="col-span-6 md:col-span-2"><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-gold">{title}</p><ul className="mt-4 space-y-2 text-sm text-ivory/70">{links.map(([label, to]) => <li key={to}><Link to={to} className="transition-colors hover:text-ivory">{label}</Link></li>)}</ul></div>; }
+function FooterColumn({ title, links }: { title: string; links: ReadonlyArray<readonly [string, StorefrontPath]> }) { return <div className="col-span-6 md:col-span-2"><p className="font-mono text-[10px] uppercase tracking-[0.25em] text-gold">{title}</p><ul className="mt-4 space-y-2 text-sm text-ivory/70">{links.map(([label, to]) => <li key={to}><Link to={to} className="transition-colors hover:text-ivory">{label}</Link></li>)}</ul></div>; }
 
 export function SectionLabel({ index, children }: { index: string; children: string }) { return <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-forest/60">({index}) — {children}</p>; }
-export function PageIntro({ eyebrow, title, description }: { eyebrow: string; title: React.ReactNode; description?: string }) { return <div className="border-b border-ink/10 pb-10 pt-16 md:pt-24"><SectionLabel index="00" >{eyebrow}</SectionLabel><h1 className="mt-4 max-w-4xl font-display text-5xl font-medium leading-[0.95] text-forest-deep md:text-7xl">{title}</h1>{description && <p className="mt-6 max-w-xl text-sm leading-relaxed text-ink/70">{description}</p>}</div>; }
+export function PageIntro({ eyebrow, title, description }: { eyebrow: string; title: ReactNode; description?: string }) { return <div className="border-b border-ink/10 pb-10 pt-16 md:pt-24"><SectionLabel index="00">{eyebrow}</SectionLabel><h1 className="mt-4 max-w-4xl font-display text-5xl font-medium leading-[0.95] text-forest-deep md:text-7xl">{title}</h1>{description && <p className="mt-6 max-w-xl text-sm leading-relaxed text-ink/70">{description}</p>}</div>; }
 
 export function ProductCard({ product, compact = false }: { product: Product; compact?: boolean }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
