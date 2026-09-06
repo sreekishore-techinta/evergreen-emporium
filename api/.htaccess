@@ -1,0 +1,17 @@
+Options -Indexes
+RewriteEngine On
+
+# Block direct access to sensitive files
+<FilesMatch "\.(sql|env|log|lock|json|md)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Allow uploads to be served directly
+RewriteCond %{REQUEST_URI} ^/evergreen-emporium/api/uploads/ [NC]
+RewriteRule ^ - [L]
+
+# Route everything else through index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

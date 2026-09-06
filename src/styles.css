@@ -4,20 +4,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -65,6 +51,8 @@
   --color-forest-deep: var(--forest-deep);
   --color-ink: var(--ink);
   --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-parchment: var(--parchment);
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -74,10 +62,12 @@
   --radius: 0.625rem;
   --ivory: oklch(0.956 0.023 89.9);
   --ivory-soft: oklch(0.928 0.03 86.5);
+  --parchment: oklch(0.942 0.032 88.0);
   --forest: oklch(0.32 0.095 157.2);
   --forest-deep: oklch(0.23 0.07 157.2);
   --ink: oklch(0.27 0.025 82.5);
   --gold: oklch(0.64 0.09 77.6);
+  --gold-light: oklch(0.82 0.07 80.0);
   --background: var(--ivory);
   --foreground: var(--ink);
   --card: var(--ivory);
@@ -152,25 +142,189 @@
     border-color: var(--color-border);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  ::selection { background: var(--color-gold); color: var(--color-forest-deep); }
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-forest-deep);
+  }
 }
 
-@utility editorial-rule { border-color: color-mix(in oklab, var(--color-ink) 14%, transparent); }
+/* ─── Utilities ─────────────────────────────────────────────────── */
+@utility editorial-rule {
+  border-color: color-mix(in oklab, var(--color-ink) 14%, transparent);
+}
+
 @utility text-balance { text-wrap: balance; }
-@utility text-pretty { text-wrap: pretty; }
+@utility text-pretty  { text-wrap: pretty; }
 
-@keyframes rise-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes image-reveal { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+/* Grain texture overlay — applied via inline style or className on a ::after pseudo via global CSS below */
+@utility grain-overlay {
+  position: relative;
+}
 
-@utility animate-rise { animation: rise-in 700ms cubic-bezier(0.32, 0.72, 0, 1) both; }
-@utility animate-reveal { animation: image-reveal 1100ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+/* ─── Keyframes ─────────────────────────────────────────────────── */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
 
+@keyframes image-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0);   }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+
+@keyframes line-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes char-rise {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0px);   }
+  50%       { transform: translateY(-8px);  }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position: 200% center;  }
+}
+
+@keyframes draw-border {
+  from { stroke-dashoffset: 400; }
+  to   { stroke-dashoffset: 0;   }
+}
+
+/* ─── Animation utilities ───────────────────────────────────────── */
+@utility animate-rise      { animation: rise-in    700ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+@utility animate-reveal    { animation: image-reveal 1100ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+@utility animate-fade-up   { animation: fade-up    800ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility animate-fade-in   { animation: fade-in    600ms ease both; }
+@utility animate-scale-in  { animation: scale-in   700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@utility animate-float     { animation: float-gentle 4s ease-in-out infinite; }
+@utility animate-shimmer   {
+  background: linear-gradient(90deg, transparent 0%, color-mix(in oklab, var(--color-gold) 35%, transparent) 50%, transparent 100%);
+  background-size: 200% auto;
+  animation: shimmer 2.5s linear infinite;
+}
+
+/* Delay utilities */
+@utility delay-100  { animation-delay: 100ms; }
+@utility delay-200  { animation-delay: 200ms; }
+@utility delay-300  { animation-delay: 300ms; }
+@utility delay-400  { animation-delay: 400ms; }
+@utility delay-500  { animation-delay: 500ms; }
+@utility delay-600  { animation-delay: 600ms; }
+@utility delay-700  { animation-delay: 700ms; }
+@utility delay-800  { animation-delay: 800ms; }
+@utility delay-1000 { animation-delay: 1000ms; }
+
+/* ─── Premium button base styles (hover handled inline via Tailwind) */
+@utility btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 2rem;
+  background-color: var(--color-gold);
+  color: var(--color-forest-deep);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: 0;
+  transition: background-color 200ms, transform 150ms, box-shadow 200ms;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+@utility btn-outline-ivory {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 2rem;
+  background-color: transparent;
+  color: var(--color-ivory);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: 0;
+  border: 1px solid color-mix(in oklab, var(--color-ivory) 40%, transparent);
+  transition: border-color 200ms, color 200ms, background-color 200ms;
+  cursor: pointer;
+}
+
+/* ─── Premium section styles ────────────────────────────────────── */
+@utility section-padding {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+@utility section-padding-lg {
+  padding-top: 9rem;
+  padding-bottom: 9rem;
+}
+
+/* Premium divider line */
+@utility gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  opacity: 0.35;
+}
+
+/* Subtle text shimmer on headings */
+@utility heading-shimmer {
+  background: linear-gradient(
+    135deg,
+    var(--color-forest-deep) 0%,
+    var(--color-forest) 50%,
+    var(--color-forest-deep) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Scrollbar styling ─────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: var(--color-ivory-soft); }
+::-webkit-scrollbar-thumb  { background: var(--color-forest); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold); }
+
+/* ─── Reduced motion ────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
 }
