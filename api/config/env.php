@@ -2,51 +2,76 @@
 /**
  * Environment configuration
  * IMPORTANT: Do NOT commit real credentials. Copy this to env.local.php and override.
+ *
+ * Production setup (cPanel):
+ *   Set these in cPanel → Software → MultiPHP INI Editor, or create a .env.local.php
+ *   that overrides these defaults.
  */
 
+// ── Load local overrides if present (never committed) ─────────────
+if (file_exists(__DIR__ . '/env.local.php')) {
+    require_once __DIR__ . '/env.local.php';
+}
+
+// ── Auto-detect site root URL ──────────────────────────────────────
+// Works on both XAMPP subfolder and production root domain
+function _detect_app_url(): string {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    // Strip /api/* from the path to get the site root
+    $script = $_SERVER['SCRIPT_NAME'] ?? '/api/index.php';
+    $root   = preg_replace('#/api(/.*)?$#', '', dirname($script));
+    $root   = rtrim($root, '/');
+    return "$scheme://$host$root";
+}
+
 // ── Database ──────────────────────────────────────────────────────
-define('DB_HOST',     getenv('DB_HOST')     ?: 'localhost');
-define('DB_PORT',     getenv('DB_PORT')     ?: '3306');
-define('DB_NAME',     getenv('DB_NAME')     ?: 'evergreen_emporium');
-define('DB_USER',     getenv('DB_USER')     ?: 'root');
-define('DB_PASS',     getenv('DB_PASS')     ?: '');
-define('DB_CHARSET',  'utf8mb4');
+if (!defined('DB_HOST'))    define('DB_HOST',     getenv('DB_HOST')     ?: 'localhost');
+if (!defined('DB_PORT'))    define('DB_PORT',     getenv('DB_PORT')     ?: '3306');
+if (!defined('DB_NAME'))    define('DB_NAME',     getenv('DB_NAME')     ?: 'evergreen_emporium');
+if (!defined('DB_USER'))    define('DB_USER',     getenv('DB_USER')     ?: 'root');
+if (!defined('DB_PASS'))    define('DB_PASS',     getenv('DB_PASS')     ?: '');
+if (!defined('DB_CHARSET')) define('DB_CHARSET',  'utf8mb4');
 
 // ── App ───────────────────────────────────────────────────────────
-define('APP_NAME',    'Evergreen Media');
-define('APP_URL',     getenv('APP_URL')     ?: 'http://localhost:8080');
-define('API_URL',     getenv('API_URL')     ?: 'http://localhost/evergreen-emporium/api');
-define('ADMIN_URL',   getenv('ADMIN_URL')   ?: 'http://localhost/evergreen-emporium/admin');
+if (!defined('APP_NAME'))   define('APP_NAME',    'Evergreen Media');
+// APP_URL: auto-detected from request, or overridden via env var / env.local.php
+if (!defined('APP_URL'))    define('APP_URL',     getenv('APP_URL')     ?: _detect_app_url());
+if (!defined('API_URL'))    define('API_URL',     getenv('API_URL')     ?: APP_URL . '/api');
+if (!defined('ADMIN_URL'))  define('ADMIN_URL',   getenv('ADMIN_URL')   ?: APP_URL . '/admin');
 
 // ── JWT ───────────────────────────────────────────────────────────
-define('JWT_SECRET',  getenv('JWT_SECRET')  ?: 'evergreen_jwt_secret_change_in_production_2026');
-define('JWT_EXPIRY',  (int)(getenv('JWT_EXPIRY') ?: 86400));   // 24 hours
-define('JWT_ADMIN_EXPIRY', (int)(getenv('JWT_ADMIN_EXPIRY') ?: 28800)); // 8 hours
+if (!defined('JWT_SECRET')) define('JWT_SECRET',  getenv('JWT_SECRET')  ?: 'evergreen_jwt_secret_change_in_production_2026');
+if (!defined('JWT_EXPIRY')) define('JWT_EXPIRY',  (int)(getenv('JWT_EXPIRY') ?: 86400));   // 24 hours
+if (!defined('JWT_ADMIN_EXPIRY')) define('JWT_ADMIN_EXPIRY', (int)(getenv('JWT_ADMIN_EXPIRY') ?: 28800)); // 8 hours
 
 // ── File uploads ──────────────────────────────────────────────────
-define('UPLOAD_DIR',       __DIR__ . '/../uploads/');
-define('UPLOAD_URL',       API_URL . '/uploads/');
-define('MAX_FILE_SIZE',    5 * 1024 * 1024); // 5 MB
-define('ALLOWED_TYPES',    ['image/jpeg','image/png','image/webp','image/gif']);
-define('ALLOWED_EXT',      ['jpg','jpeg','png','webp','gif']);
+if (!defined('UPLOAD_DIR'))      define('UPLOAD_DIR',       __DIR__ . '/../../api/uploads/');
+if (!defined('UPLOAD_URL'))      define('UPLOAD_URL',       API_URL . '/uploads/');
+if (!defined('MAX_FILE_SIZE'))   define('MAX_FILE_SIZE',    5 * 1024 * 1024); // 5 MB
+if (!defined('ALLOWED_TYPES'))   define('ALLOWED_TYPES',    ['image/jpeg','image/png','image/webp','image/gif']);
+if (!defined('ALLOWED_EXT'))     define('ALLOWED_EXT',      ['jpg','jpeg','png','webp','gif']);
 
 // ── CORS ──────────────────────────────────────────────────────────
-define('CORS_ORIGINS', [
+// Allow both localhost dev ports and the live domain
+if (!defined('CORS_ORIGINS')) define('CORS_ORIGINS', array_filter(array_unique([
     'http://localhost:8080',
+    'http://localhost:8081',   // Vite dev server
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost',
     APP_URL,
-]);
+    getenv('CORS_EXTRA') ?: '', // extra origin via env var
+])));
 
 // ── Security ──────────────────────────────────────────────────────
-define('BCRYPT_COST', 12);
-define('RATE_LIMIT',  100); // requests per minute per IP
+if (!defined('BCRYPT_COST'))   define('BCRYPT_COST', 12);
+if (!defined('RATE_LIMIT'))    define('RATE_LIMIT',  100); // requests per minute per IP
 
 // ── Pagination ────────────────────────────────────────────────────
-define('DEFAULT_PAGE_SIZE', 20);
-define('MAX_PAGE_SIZE',     100);
+if (!defined('DEFAULT_PAGE_SIZE')) define('DEFAULT_PAGE_SIZE', 20);
+if (!defined('MAX_PAGE_SIZE'))     define('MAX_PAGE_SIZE',     100);
 
 // ── Environment ───────────────────────────────────────────────────
-define('APP_ENV', getenv('APP_ENV') ?: 'development');
-define('APP_DEBUG', APP_ENV === 'development');
+if (!defined('APP_ENV'))   define('APP_ENV', getenv('APP_ENV') ?: 'production');
+if (!defined('APP_DEBUG')) define('APP_DEBUG', APP_ENV === 'development');

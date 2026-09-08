@@ -37,10 +37,44 @@ class JWT {
         return $payload;
     }
 
+    public static function getTokenFromRequest(): ?string {
+        $auth = '';
+        if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
+            $auth = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $auth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        } elseif (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            if (is_array($headers)) {
+                foreach ($headers as $key => $val) {
+                    if (strcasecmp((string)$key, 'Authorization') === 0) {
+                        $auth = (string)$val;
+                        break;
+                    }
+                }
+            }
+        } elseif (function_exists('apache_request_headers')) {
+            $headers = apache_request_headers();
+            if (is_array($headers)) {
+                foreach ($headers as $key => $val) {
+                    if (strcasecmp((string)$key, 'Authorization') === 0) {
+                        $auth = (string)$val;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (str_starts_with(trim($auth), 'Bearer ')) {
+            return trim(substr(trim($auth), 7));
+        }
+        return null;
+    }
+
     public static function fromRequest(): array {
-        $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-        if (str_starts_with($auth, 'Bearer ')) {
-            return self::decode(substr($auth, 7));
+        $token = self::getTokenFromRequest();
+        if ($token) {
+            return self::decode($token);
         }
         throw new RuntimeException('No authorization token provided');
     }

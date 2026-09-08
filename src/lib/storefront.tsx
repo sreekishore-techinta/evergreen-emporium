@@ -18,9 +18,9 @@ const IMG = {
   azospirillum:
     "https://images.unsplash.com/photo-1569949381669-ecf31ae8e613?w=800&q=85&auto=format&fit=crop",
   paspoBacteria:
-    "https://images.unsplash.com/photo-1585564648577-a64b30a3f7d9?w=800&q=85&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&q=85&auto=format&fit=crop",
   trichoderma:
-    "https://images.unsplash.com/photo-1599686300821-42a9a38bb975?w=800&q=85&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1589923188900-85dae523342b?w=800&q=85&auto=format&fit=crop",
   vermicompost: compostImage,
   boneMeal:
     "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&q=85&auto=format&fit=crop",

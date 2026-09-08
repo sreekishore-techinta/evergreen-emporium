@@ -53,9 +53,9 @@
   --color-gold: var(--gold);
   --color-gold-light: var(--gold-light);
   --color-parchment: var(--parchment);
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 :root {
@@ -149,9 +149,23 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: "Inter", system-ui, sans-serif;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Display headings — always bold Playfair */
+  .font-display {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* Labels that use font-mono — now bold Jakarta Sans */
+  .font-mono {
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.08em;
   }
 
   ::selection {

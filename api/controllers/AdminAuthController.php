@@ -36,7 +36,7 @@ class AdminAuthController {
 
     public function logout(): void {
         try {
-            $token = substr($_SERVER['HTTP_AUTHORIZATION'] ?? '', 7);
+            $token = JWT::getTokenFromRequest();
             if ($token) $this->admins->revokeSession($token);
         } catch (Throwable) {}
         Response::success(null, 'Logged out.');

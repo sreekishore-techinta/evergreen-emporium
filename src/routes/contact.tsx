@@ -92,7 +92,7 @@ function ContactPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-fit bg-forest px-8 py-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-ivory transition-colors hover:bg-forest-deep"
+                  className="w-fit rounded-full bg-forest px-8 py-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-ivory transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest-deep hover:shadow-lg active:translate-y-0"
                 >
                   Send message
                 </button>

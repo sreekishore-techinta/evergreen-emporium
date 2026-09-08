@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { AnimatePresence, motion } from "framer-motion";
+import { Loader2, Search, SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageIntro, PremiumProductCard } from "@/components/storefront";
-import { ALL_CATEGORIES, products, type ProductCategory } from "@/lib/storefront";
+import { categoriesApi, useProducts, type ApiCategory, type ProductListParams } from "@/lib/api";
 
 export const Route = createFileRoute("/shop")({
   head: () => ({
@@ -25,29 +25,56 @@ type SortOption = "Featured" | "Price: Low" | "Price: High" | "Top Rated";
 
 const SORT_OPTIONS: SortOption[] = ["Featured", "Price: Low", "Price: High", "Top Rated"];
 
+const SORT_MAP: Record<SortOption, ProductListParams["sort"]> = {
+  "Featured":    "default",
+  "Price: Low":  "price_asc",
+  "Price: High": "price_desc",
+  "Top Rated":   "rating",
+};
+
 function ShopPage() {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<ProductCategory | "All">("All");
-  const [sort, setSort] = useState<SortOption>("Featured");
+  const [query, setQuery]             = useState("");
+  const [debouncedQuery, setDQ]       = useState("");
+  const [categorySlug, setCategorySlug] = useState<string>("all");
+  const [sort, setSort]               = useState<SortOption>("Featured");
+  const [categories, setCategories]   = useState<ApiCategory[]>([]);
+  const [page, setPage]               = useState(1);
 
-  const visible = useMemo(() => {
-    return [...products]
-      .filter(
-        (p) =>
-          (category === "All" || p.category === category) &&
-          `${p.name} ${p.description} ${p.type}`
-            .toLowerCase()
-            .includes(query.toLowerCase())
-      )
-      .sort((a, b) => {
-        if (sort === "Price: Low") return a.price - b.price;
-        if (sort === "Price: High") return b.price - a.price;
-        if (sort === "Top Rated") return b.rating - a.rating;
-        return 0; // Featured — preserve catalogue order
-      });
-  }, [category, query, sort]);
+  /* ── Debounce search input 300 ms ── */
+  useEffect(() => {
+    const t = setTimeout(() => { setDQ(query); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  const hasFilters = query !== "" || category !== "All";
+  /* ── Load categories once ── */
+  useEffect(() => {
+    categoriesApi.list(true).then((res) => {
+      if (res.success && res.data) setCategories(res.data);
+    });
+  }, []);
+
+  /* ── Build API params ── */
+  const params: ProductListParams = {
+    page,
+    page_size: 16,
+    sort: SORT_MAP[sort],
+    ...(debouncedQuery ? { search: debouncedQuery } : {}),
+    ...(categorySlug !== "all" ? { category_slug: categorySlug } : {}),
+  };
+
+  const { data, loading } = useProducts(params);
+  const products   = data?.items ?? [];
+  const total      = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+
+  const hasFilters = query !== "" || categorySlug !== "all";
+
+  function clearFilters() {
+    setQuery("");
+    setDQ("");
+    setCategorySlug("all");
+    setPage(1);
+  }
 
   return (
     <main className="bg-ivory text-ink">
@@ -63,7 +90,7 @@ function ShopPage() {
           description="Premium natural inputs for home growers, nurseries and commercial producers — presented with clarity, selected with care."
         />
 
-        {/* Filter bar */}
+        {/* ── Filter bar ── */}
         <div className="mt-8 flex flex-col gap-5 border-b border-ink/10 pb-6 lg:flex-row lg:items-center lg:justify-between">
           {/* Search */}
           <div className="flex flex-1 items-center gap-3 border-b border-ink/20 pb-3 lg:max-w-sm lg:pb-0 lg:border-none">
@@ -71,52 +98,43 @@ function ShopPage() {
             <input
               aria-label="Search products"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setPage(1); }}
               placeholder="Search products…"
               className="w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
             />
             {query && (
-              <button onClick={() => setQuery("")} aria-label="Clear search">
+              <button onClick={() => { setQuery(""); setDQ(""); setPage(1); }} aria-label="Clear search">
                 <X className="size-3.5 text-ink/40 hover:text-ink" />
               </button>
             )}
           </div>
 
-          {/* Category filters + sort */}
+          {/* Category + sort */}
           <div className="flex flex-wrap items-center gap-2">
             <SlidersHorizontal className="size-4 shrink-0 text-forest" />
 
             {/* All */}
             <button
-              onClick={() => setCategory("All")}
+              onClick={() => { setCategorySlug("all"); setPage(1); }}
               className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
-                category === "All"
-                  ? "bg-forest text-ivory"
-                  : "text-ink/55 hover:text-forest"
+                categorySlug === "all" ? "bg-forest text-ivory" : "text-ink/55 hover:text-forest"
               }`}
             >
               All
             </button>
 
-            {/* Category buttons */}
-            {ALL_CATEGORIES.map((cat) => (
+            {/* Dynamic category buttons from API */}
+            {categories.map((cat) => (
               <button
-                key={cat}
-                onClick={() => setCategory(cat)}
+                key={cat.id}
+                onClick={() => { setCategorySlug(cat.slug); setPage(1); }}
                 className={`px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
-                  category === cat
-                    ? "bg-forest text-ivory"
-                    : "text-ink/55 hover:text-forest"
+                  categorySlug === cat.slug ? "bg-forest text-ivory" : "text-ink/55 hover:text-forest"
                 }`}
               >
-                {/* Short labels for mobile */}
-                <span className="hidden sm:inline">{cat}</span>
+                <span className="hidden sm:inline">{cat.name}</span>
                 <span className="sm:hidden">
-                  {cat === "Bio & Microbial Solutions"
-                    ? "Bio"
-                    : cat === "Organic Fertilizers & Plant Nutrition"
-                    ? "Organic"
-                    : "Media"}
+                  {cat.name.split(" ")[0]}
                 </span>
               </button>
             ))}
@@ -125,7 +143,7 @@ function ShopPage() {
             <select
               aria-label="Sort products"
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortOption)}
+              onChange={(e) => { setSort(e.target.value as SortOption); setPage(1); }}
               className="ml-2 border-b border-ink/20 bg-transparent py-2 pl-1 pr-6 font-mono text-[10px] uppercase tracking-[0.18em] text-ink outline-none"
             >
               {SORT_OPTIONS.map((o) => (
@@ -135,19 +153,22 @@ function ShopPage() {
           </div>
         </div>
 
-        {/* Active filter + count */}
+        {/* ── Count + clear ── */}
         <div className="flex items-center justify-between py-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-            {visible.length} product{visible.length !== 1 ? "s" : ""}
-            {category !== "All" && (
-              <span className="ml-2 text-gold">
-                — {category}
+          <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
+            {loading
+              ? <Loader2 className="size-3 animate-spin" />
+              : <>{total} product{total !== 1 ? "s" : ""}</>
+            }
+            {categorySlug !== "all" && (
+              <span className="text-gold">
+                — {categories.find((c) => c.slug === categorySlug)?.name ?? categorySlug}
               </span>
             )}
           </p>
           {hasFilters && (
             <button
-              onClick={() => { setQuery(""); setCategory("All"); }}
+              onClick={clearFilters}
               className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/40 transition-colors hover:text-forest"
             >
               <X className="size-3" /> Clear filters
@@ -155,18 +176,34 @@ function ShopPage() {
           )}
         </div>
 
-        {/* Product grid */}
+        {/* ── Product grid ── */}
         <AnimatePresence mode="wait">
-          {visible.length > 0 ? (
+          {loading ? (
             <motion.div
-              key={`${category}-${query}-${sort}`}
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            >
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-4">
+                  <div className="aspect-[3/4] w-full animate-pulse rounded bg-ink/8" />
+                  <div className="h-3 w-3/4 animate-pulse rounded bg-ink/8" />
+                  <div className="h-3 w-1/2 animate-pulse rounded bg-ink/8" />
+                </div>
+              ))}
+            </motion.div>
+          ) : products.length > 0 ? (
+            <motion.div
+              key={`${categorySlug}-${debouncedQuery}-${sort}-${page}`}
               className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {visible.map((product) => (
+              {products.map((product) => (
                 <PremiumProductCard key={product.id} product={product} />
               ))}
             </motion.div>
@@ -177,15 +214,11 @@ function ShopPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              <p className="font-display text-3xl text-forest-deep">
-                No products found.
-              </p>
-              <p className="mt-3 text-sm text-ink/50">
-                Try adjusting your search or filter.
-              </p>
+              <p className="font-display text-3xl text-forest-deep">No products found.</p>
+              <p className="mt-3 text-sm text-ink/50">Try adjusting your search or filter.</p>
               <Button
-                onClick={() => { setQuery(""); setCategory("All"); }}
-                className="mt-6 rounded-none bg-forest font-mono text-[10px] uppercase tracking-[0.2em] text-ivory hover:bg-forest-deep"
+                onClick={clearFilters}
+                className="mt-6 rounded-full bg-forest font-mono text-[10px] uppercase tracking-[0.2em] text-ivory transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest-deep hover:shadow-lg active:translate-y-0"
               >
                 Clear filters
               </Button>
@@ -193,20 +226,53 @@ function ShopPage() {
           )}
         </AnimatePresence>
 
-        {/* Category browse strip */}
-        {category === "All" && visible.length > 0 && (
+        {/* ── Pagination ── */}
+        {totalPages > 1 && (
+          <div className="mt-16 flex items-center justify-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="border border-ink/20 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/55 transition-colors hover:border-forest hover:text-forest disabled:pointer-events-none disabled:opacity-30"
+            >
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
+                  p === page
+                    ? "border-forest bg-forest text-ivory"
+                    : "border-ink/20 text-ink/55 hover:border-forest hover:text-forest"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="border border-ink/20 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/55 transition-colors hover:border-forest hover:text-forest disabled:pointer-events-none disabled:opacity-30"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* ── Category browse strip ── */}
+        {categorySlug === "all" && products.length > 0 && categories.length > 0 && (
           <div className="mt-20 border-t border-ink/10 pt-12">
             <p className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-ink/40">
               Browse by category
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              {ALL_CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className="border border-forest/20 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-forest transition-all hover:bg-forest hover:text-ivory"
+                  key={cat.id}
+                  onClick={() => { setCategorySlug(cat.slug); setPage(1); }}
+                  className="rounded-full border border-forest/20 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-forest transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest hover:text-ivory hover:shadow-md active:translate-y-0"
                 >
-                  {cat}
+                  {cat.name}
                 </button>
               ))}
             </div>

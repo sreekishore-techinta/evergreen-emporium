@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteFooter, SiteHeader } from "@/components/storefront";
 import { StoreProvider } from "@/lib/storefront";
+import { AdminAuthProvider } from "@/lib/adminContext";
 
 function NotFoundComponent() {
   return (
@@ -91,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500;1,600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700;1,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" },
       {
         rel: "stylesheet",
         href: appCss,
@@ -121,15 +122,24 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router   = useRouter();
+  const isAdmin  = router.state.location.pathname.startsWith("/admin");
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <StoreProvider>
-        <SiteHeader />
-        <Outlet />
-        <SiteFooter />
-      </StoreProvider>
+      <AdminAuthProvider>
+        {isAdmin ? (
+          /* Admin routes — no storefront header/footer */
+          <Outlet />
+        ) : (
+          /* Storefront routes */
+          <StoreProvider>
+            <SiteHeader />
+            <Outlet />
+            <SiteFooter />
+          </StoreProvider>
+        )}
+      </AdminAuthProvider>
     </QueryClientProvider>
   );
 }

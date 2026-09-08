@@ -5,11 +5,16 @@
  */
 
 // ── Base URL ───────────────────────────────────────────────────────
-// Vite exposes env vars prefixed with VITE_
-// Create .env.local and set VITE_API_URL=http://localhost/evergreen-emporium/api
-export const API_BASE =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  'http://localhost/evergreen-emporium/api';
+// API paths in this file already include /api prefix (e.g. /api/products).
+// So API_BASE must point to the site ROOT, not to /api/.
+// Dev: leave empty → Vite proxy handles /api/* → XAMPP
+// Prod: set VITE_API_URL=https://yourdomain.com  (no trailing slash, no /api)
+export const API_BASE: string = (() => {
+  const raw = import.meta.env['VITE_API_URL'] as string | undefined;
+  if (!raw) return '';                        // dev — use Vite proxy
+  // Strip trailing /api or /api/ if someone accidentally includes it
+  return raw.replace(/\/api\/?$/, '');
+})();
 
 // ── Token storage ──────────────────────────────────────────────────
 const TOKEN_KEY = 'em_user_token';
@@ -388,3 +393,111 @@ export const contactApi = {
   subscribe: (email: string) =>
     request('POST', '/api/newsletter/subscribe', { email }),
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// REACT HOOKS  — lightweight, no extra library needed
+// ═══════════════════════════════════════════════════════════════════
+import { useEffect, useState } from 'react';
+
+/** Generic async-load state shape */
+export interface UseApiState<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+  reload: () => void;
+}
+
+/** Fetch a paginated list of products (shop page, featured, etc.) */
+export function useProducts(params?: ProductListParams): UseApiState<{ items: ApiProduct[]; total: number; totalPages: number }> {
+  const [data, setData]       = useState<{ items: ApiProduct[]; total: number; totalPages: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
+  const [tick, setTick]       = useState(0);
+
+  // Stable serialised key so the effect re-fires when params change
+  const key = JSON.stringify(params ?? {});
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    productsApi.list(params).then((res) => {
+      if (cancelled) return;
+      if (res.success) {
+        setData({
+          items:      res.data,
+          total:      res.pagination.total,
+          totalPages: res.pagination.total_pages,
+        });
+      } else {
+        setError('Failed to load products.');
+      }
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, tick]);
+
+  return { data, loading, error, reload: () => setTick((t) => t + 1) };
+}
+
+/** Fetch a single product by numeric id or string slug */
+export function useProduct(idOrSlug: string | number): UseApiState<ApiProduct> {
+  const [data, setData]       = useState<ApiProduct | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
+  const [tick, setTick]       = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setData(null);
+
+    const fetch$ =
+      typeof idOrSlug === 'number'
+        ? productsApi.get(idOrSlug)
+        : productsApi.getBySlug(String(idOrSlug));
+
+    fetch$.then((res) => {
+      if (cancelled) return;
+      if (res.success && res.data) {
+        setData(res.data);
+      } else {
+        setError('Product not found.');
+      }
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [idOrSlug, tick]);
+
+  return { data, loading, error, reload: () => setTick((t) => t + 1) };
+}
+
+/** Convenience: fetch featured products for the homepage */
+export function useFeaturedProducts(limit = 4) {
+  return useProducts({ featured: true, page_size: limit });
+}
+
+/** Search products against the live API (for search modal) */
+export function useProductSearch(query: string, limit = 6): { results: ApiProduct[]; loading: boolean } {
+  const [results, setResults] = useState<ApiProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (!q) { setResults([]); return; }
+
+    setLoading(true);
+    const timer = setTimeout(() => {
+      productsApi.list({ search: q, page_size: limit }).then((res) => {
+        setResults(res.success ? res.data : []);
+        setLoading(false);
+      });
+    }, 280); // 280 ms debounce
+
+    return () => clearTimeout(timer);
+  }, [query, limit]);
+
+  return { results, loading };
+}

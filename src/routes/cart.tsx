@@ -30,7 +30,7 @@ function CartPage() {
           </p>
           <Link
             to="/shop"
-            className="mt-2 inline-flex items-center gap-2 bg-forest px-7 py-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-ivory transition-colors hover:bg-forest-deep"
+            className="mt-2 inline-flex items-center gap-2 rounded-full bg-forest px-7 py-3.5 font-mono text-[10px] uppercase tracking-[0.22em] text-ivory transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest-deep hover:shadow-lg active:translate-y-0"
           >
             Shop the range
           </Link>
@@ -112,7 +112,7 @@ function CartPage() {
             </p>
             <Button
               asChild
-              className="mt-6 w-full rounded-none bg-forest py-4 font-mono text-[10px] uppercase tracking-[0.22em] text-ivory hover:bg-forest-deep"
+              className="mt-6 w-full rounded-full bg-forest py-4 font-mono text-[10px] uppercase tracking-[0.22em] text-ivory transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest-deep hover:shadow-lg active:translate-y-0"
             >
               <Link to="/checkout">Proceed to checkout</Link>
             </Button>

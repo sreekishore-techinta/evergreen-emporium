@@ -26,9 +26,9 @@ class AuthMiddleware {
                 Response::unauthorized('Admin access required.');
             }
             // Also validate against DB session
-            $token = substr($_SERVER['HTTP_AUTHORIZATION'] ?? '', 7);
+            $token = JWT::getTokenFromRequest();
             $model = new AdminModel();
-            if (!$model->validateSession($token)) {
+            if (!$token || !$model->validateSession($token)) {
                 Response::unauthorized('Session expired. Please log in again.');
             }
             return $payload;

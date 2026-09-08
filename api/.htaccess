@@ -1,5 +1,12 @@
 Options -Indexes
 RewriteEngine On
+# RewriteBase auto-detected — works on both /evergreen-emporium/api/ (XAMPP) and /api/ (production)
+RewriteBase /api/
+
+# Pass Authorization header to PHP (required for JWT Bearer tokens)
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 # Block direct access to sensitive files
 <FilesMatch "\.(sql|env|log|lock|json|md)$">
@@ -7,8 +14,8 @@ RewriteEngine On
     Deny from all
 </FilesMatch>
 
-# Allow uploads to be served directly
-RewriteCond %{REQUEST_URI} ^/evergreen-emporium/api/uploads/ [NC]
+# Allow uploads to be served directly (no routing through index.php)
+RewriteCond %{REQUEST_URI} /uploads/ [NC]
 RewriteRule ^ - [L]
 
 # Route everything else through index.php

@@ -51,7 +51,7 @@ const CATEGORY_META: Record<
     headline: "Growing Media",
     body: "Premium root substrates — export-quality cocopeat and an 18-in-1 potting mix — engineered for superior aeration, water retention and healthy root development.",
     image:
-      "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=1000&q=85&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1000&q=85&auto=format&fit=crop",
   },
 };
 

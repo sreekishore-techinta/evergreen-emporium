@@ -11,5 +11,30 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    prerender: {
+      enabled: true,
+      autoStaticPathsDiscovery: true,
+    },
+  },
+  nitro: {
+    output: {
+      dir: ".output",
+      publicDir: ".output/public",
+    },
+  },
+  vite: {
+    server: {
+      proxy: {
+        // Forward /api/* to XAMPP PHP backend (no path rewrite needed —
+        // XAMPP serves at /evergreen-emporium/api/*)
+        "/api": {
+          target: "http://localhost/evergreen-emporium",
+          changeOrigin: true,
+        },
+      },
+    },
+    build: {
+      outDir: ".output/public",
+    },
   },
 });
