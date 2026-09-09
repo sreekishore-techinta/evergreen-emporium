@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -108,11 +109,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
@@ -122,8 +123,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router   = useRouter();
-  const isAdmin  = router.state.location.pathname.startsWith("/admin");
+  // useRouterState is SSR-safe — it reads from the router's dehydrated state
+  // on the server and from live state on the client. This ensures isAdmin is
+  // computed correctly during SSR so the header/footer are never included in
+  // the server-rendered HTML for /admin/* routes.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isAdmin  = pathname.startsWith("/admin");
 
   return (
     <QueryClientProvider client={queryClient}>

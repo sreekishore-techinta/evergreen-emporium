@@ -96,7 +96,7 @@ const IMG = {
   terraceGarden:
     "https://images.unsplash.com/photo-1531971589569-0d9370cbe1e5?w=600&q=75&auto=format&fit=crop",
   nursery:
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=75&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&q=75&auto=format&fit=crop",
   organicFarming:
     "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&q=75&auto=format&fit=crop",
   vegCrops:
@@ -201,8 +201,6 @@ function HomePage() {
       <FeaturedProductsSection />
       <ShopByNeedSection />
       <WhyEvergreenSection />
-      <ShopByApplicationSection />
-      <ProcessStorySection />
       <LearnAndGrowSection />
       <CustomerStoriesSection />
       <FinalCtaSection />
@@ -225,7 +223,7 @@ function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative flex min-h-[540px] h-[72vh] max-h-[740px] items-center justify-end overflow-hidden bg-forest-deep"
+      className="relative flex min-h-screen h-screen items-center justify-end overflow-hidden bg-forest-deep"
       aria-label="Hero"
     >
       {/* Background image — zoomed out, natural 2:1 panoramic framing */}
@@ -319,7 +317,7 @@ function BrandIntroSection() {
         {/* Left — editorial typography block */}
         <div className="col-span-12 lg:col-span-6">
           <Reveal>
-            <SectionLabel index="01">The approach</SectionLabel>
+            <SectionLabel>The approach</SectionLabel>
           </Reveal>
           <Reveal delay={0.1}>
             <h2
@@ -508,7 +506,7 @@ function CategoriesSection() {
         <div className="flex items-end justify-between">
           <Reveal>
             <div>
-              <SectionLabel index="02">Categories</SectionLabel>
+              <SectionLabel>Categories</SectionLabel>
               <h2
                 className="mt-4 font-display font-medium leading-tight text-forest-deep"
                 style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}
@@ -550,7 +548,7 @@ function FeaturedProductsSection() {
         <div className="flex items-end justify-between">
           <Reveal>
             <div>
-              <SectionLabel index="03">Featured products</SectionLabel>
+              <SectionLabel>Featured products</SectionLabel>
               <h2
                 className="mt-4 font-display font-medium leading-tight text-forest-deep"
                 style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}
@@ -570,7 +568,7 @@ function FeaturedProductsSection() {
         </div>
 
         {/* Product grid — first 4 from the real catalogue */}
-        <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+        <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8 auto-rows-fr">
           {products.slice(0, 4).map((product) => (
             <PremiumProductCard key={product.id} product={product} />
           ))}
@@ -770,7 +768,7 @@ function ShopByNeedSection() {
               <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/15 px-3.5 py-1.5 backdrop-blur-md shadow-xs">
                 <Sparkles className="size-3.5 text-gold animate-pulse" />
                 <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-ink font-semibold">
-                  (05) — Botanical Diagnosis Moodboard
+                  Botanical Diagnosis Moodboard
                 </span>
               </div>
             </Reveal>
@@ -865,7 +863,7 @@ function ShopByNeedSection() {
               </button>
             </div>
           ) : (
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 [column-fill:_balance]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
               {filteredPins.map((pin) => {
                 const IconComponent = pin.icon;
                 const isSaved = savedPins.has(pin.id);
@@ -874,153 +872,163 @@ function ShopByNeedSection() {
                 return (
                   <div
                     key={pin.id}
-                    className="break-inside-avoid group relative flex flex-col rounded-3xl border border-ink/10 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] overflow-hidden transition-all duration-500 hover:border-gold/50 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(0,0,0,0.09)]"
+                    className="group relative flex flex-col h-full overflow-hidden transition-all duration-500 hover:-translate-y-2"
+                    style={{
+                      background: "#FEFDFB",
+                      border: "1px solid rgba(197,160,89,0.18)",
+                      borderRadius: "18px",
+                      boxShadow: "0 2px 12px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8) inset",
+                    }}
                   >
-                    {/* ── Media Header with Pinterest Save Button ── */}
-                    <div className={`relative w-full ${pin.aspect} overflow-hidden bg-ivory-soft`}>
-                      <img
-                        src={pin.image}
-                        alt={pin.label}
-                        loading="lazy"
-                        className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
 
-                      {/* Gentle bottom gradient for tag legibility */}
+
+                    {/* ── Icon + Title block ── */}
+                    <div className="px-5 pt-5 pb-3 flex items-start gap-4">
+                      {/* Dark icon badge */}
                       <div
-                        className="absolute inset-0"
+                        className="shrink-0 size-12 rounded-2xl flex items-center justify-center shadow-lg"
                         style={{
-                          background:
-                            "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 40%, rgba(0,0,0,0.55) 100%)",
+                          background: "linear-gradient(135deg, #1C2B1E 0%, #243326 100%)",
+                          border: "1px solid rgba(197,160,89,0.25)",
                         }}
-                      />
-
-                      {/* Top Floating Bar: Diagnosis Symptom Tag & Pinterest Pin Button */}
-                      <div className="absolute inset-x-0 top-0 p-4 flex items-center justify-between z-10">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/95 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.16em] text-ink backdrop-blur-md shadow-sm font-semibold">
-                          {pin.badge}
-                        </span>
-
-                        {/* Pinterest Pin Button */}
-                        <button
-                          onClick={(e) => toggleSavePin(pin.id, e)}
-                          title={isSaved ? "Remove from Garden Board" : "Save Pin to Garden Board"}
-                          className={`size-10 rounded-full flex items-center justify-center backdrop-blur-md transition-all duration-300 shadow-md ${
-                            isSaved
-                              ? "bg-gold text-ink border border-gold scale-105"
-                              : "bg-white/90 border border-black/10 text-ink hover:bg-gold hover:text-ink hover:border-gold hover:scale-110"
-                          }`}
-                        >
-                          {isSaved ? (
-                            <BookmarkCheck className="size-4.5" />
-                          ) : (
-                            <Bookmark className="size-4.5" />
-                          )}
-                        </button>
+                      >
+                        <IconComponent className="size-5 text-gold" />
                       </div>
 
-                      {/* Temporary Saved Tooltip */}
-                      {isJustSaved && (
-                        <div className="absolute top-16 right-4 z-20 rounded-lg bg-ink px-3 py-1 text-[11px] font-mono text-ivory font-semibold shadow-xl animate-fade-in">
-                          Pinned to Garden!
-                        </div>
-                      )}
-
-                      {/* Bottom Image Overlay Metric */}
-                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
-                        <div className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-white/95 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.2em] text-ink backdrop-blur-md shadow-sm font-semibold">
-                          <IconComponent className="size-3 text-gold" />
-                          <span>{pin.metric}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* ── Pin Content & Diagnostic Prescription ── */}
-                    <div className="flex-1 p-6 flex flex-col justify-between">
-                      <div>
-                        {/* Protocol Code & Category */}
-                        <div className="flex items-center justify-between text-gold font-mono text-[10px] uppercase tracking-[0.25em] font-semibold">
-                          <span>{pin.code}</span>
-                          <span className="text-ink/30">•</span>
-                          <span className="text-ink/60">{pin.category}</span>
-                        </div>
-
-                        {/* Title */}
-                        <h3 className="mt-2.5 font-display text-2xl font-medium leading-snug text-ink group-hover:text-gold transition-colors duration-300">
+                      <div className="min-w-0 pt-0.5">
+                        <p className="font-mono text-[8.5px] uppercase tracking-[0.24em] text-gold font-semibold mb-0.5">
+                          {pin.category}
+                        </p>
+                        <h3 className="font-display text-xl font-semibold leading-[1.15] text-ink group-hover:text-forest-deep transition-colors duration-300">
                           {pin.label}
                         </h3>
-
-                        {/* Diagnosis breakdown */}
-                        <div className="mt-4 space-y-3 text-xs leading-relaxed">
-                          <div className="rounded-xl border border-ink/8 bg-[#FAF8F5] p-3">
-                            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-gold font-semibold block mb-1">
-                              Identified Symptom:
-                            </span>
-                            <p className="text-ink/75 italic">"{pin.symptom}"</p>
-                          </div>
-
-                          <div className="rounded-xl border border-ink/8 bg-white p-3 shadow-xs">
-                            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink/50 font-semibold block mb-1">
-                              Organic Prescription:
-                            </span>
-                            <p className="text-ink/85 leading-normal">{pin.prescription}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* ── Pinterest E-Commerce "Shop This Pin" ── */}
-                      <div className="mt-6 pt-5 border-t border-ink/10">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="font-mono text-[9px] uppercase tracking-[0.24em] text-gold font-semibold flex items-center gap-1.5">
-                            <Sparkles className="size-3 text-gold" />
-                            Matched Solutions ({pin.productIds.length})
-                          </span>
-                          <span className="text-[10px] font-mono text-ink/45">Shop Pin</span>
-                        </div>
-
-                        <div className="space-y-2">
-                          {pin.productIds.map((id) => {
-                            const p = products.find((pr) => pr.id === id);
-                            if (!p) return null;
-                            return (
-                              <Link
-                                key={id}
-                                to="/product/$id"
-                                params={{ id }}
-                                className="group/item flex items-center justify-between rounded-xl border border-ink/10 bg-[#FAF8F5] px-3 py-2 text-left transition-all duration-300 hover:border-gold/60 hover:bg-white hover:translate-x-1 shadow-xs"
-                              >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <div className="size-8 rounded-lg overflow-hidden shrink-0 border border-ink/10 bg-ivory-soft">
-                                    <img
-                                      src={p.image}
-                                      alt={p.name}
-                                      className="size-full object-cover"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                  <div className="truncate">
-                                    <p className="font-display text-sm font-medium text-ink truncate group-hover/item:text-gold transition-colors">
-                                      {p.name}
-                                    </p>
-                                    <p className="font-mono text-[9px] text-ink/50 uppercase tracking-wider">
-                                      {p.type} • {p.weight}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 pl-2 shrink-0">
-                                  <span className="font-mono text-xs font-semibold text-ink">
-                                    ₹{p.price}
-                                  </span>
-                                  <div className="size-5 rounded-full flex items-center justify-center bg-gold/15 text-ink group-hover/item:bg-gold transition-all">
-                                    <ArrowUpRight className="size-3" />
-                                  </div>
-                                </div>
-                              </Link>
-                            );
-                          })}
-                        </div>
                       </div>
                     </div>
+
+                    {/* ── Hairline divider ── */}
+                    <div className="mx-5 h-px bg-gradient-to-r from-transparent via-ink/10 to-transparent" />
+
+                    {/* ── Body copy ── */}
+                    <div className="px-5 pt-4 flex-1 flex flex-col gap-4">
+                      {/* Symptom */}
+                      <div>
+                        <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-gold/80 font-semibold mb-1.5">
+                          Identified Symptom
+                        </p>
+                        <p className="text-[12px] leading-relaxed text-ink/60 italic">
+                          "{pin.symptom}"
+                        </p>
+                      </div>
+
+                      {/* Prescription */}
+                      <div>
+                        <p className="font-mono text-[8px] uppercase tracking-[0.22em] text-ink/40 font-semibold mb-1.5">
+                          Organic Prescription
+                        </p>
+                        <p className="text-[12px] leading-relaxed text-ink/75">
+                          {pin.prescription}
+                        </p>
+                      </div>
+
+                      {/* Metric tag */}
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold/8 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-gold/90 font-semibold">
+                          <Check className="size-2.5" />
+                          {pin.metric}
+                        </span>
+                        {pin.productIds.map((id) => {
+                          const p = products.find((pr) => pr.id === id);
+                          if (!p) return null;
+                          return (
+                            <span key={id} className="rounded-full border border-ink/10 bg-ink/[0.03] px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-ink/50">
+                              {p.type}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* ── Save button (compact, inline) ── */}
+                    <div className="px-5 mt-4 mb-1 flex justify-end">
+                      <button
+                        onClick={(e) => toggleSavePin(pin.id, e)}
+                        title={isSaved ? "Remove from Garden Board" : "Save to Garden Board"}
+                        className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.18em] font-semibold transition-all duration-300 ${
+                          isSaved
+                            ? "bg-gold border-gold text-ink shadow-md"
+                            : "border-ink/15 bg-white text-ink/60 hover:border-gold hover:text-gold shadow-xs"
+                        }`}
+                      >
+                        {isSaved ? (
+                          <BookmarkCheck className="size-3" />
+                        ) : (
+                          <Bookmark className="size-3" />
+                        )}
+                        {isSaved ? "Saved" : "Save"}
+                      </button>
+                    </div>
+
+                    {/* ── Matched products drawer ── */}
+                    <div
+                      className="mx-4 mb-4 rounded-xl border border-ink/8 overflow-hidden"
+                      style={{ background: "rgba(250,248,245,0.8)" }}
+                    >
+                      <div className="flex items-center justify-between px-3 py-2 border-b border-ink/8">
+                        <span className="font-mono text-[8.5px] uppercase tracking-[0.22em] text-gold font-semibold flex items-center gap-1">
+                          <Sparkles className="size-2.5" />
+                          Matched Solutions
+                        </span>
+                        <span className="font-mono text-[8.5px] text-ink/35 uppercase tracking-wider">
+                          {pin.productIds.length} products
+                        </span>
+                      </div>
+                      <div className="divide-y divide-ink/6">
+                        {pin.productIds.map((id) => {
+                          const p = products.find((pr) => pr.id === id);
+                          if (!p) return null;
+                          return (
+                            <Link
+                              key={id}
+                              to="/product/$id"
+                              params={{ id }}
+                              className="group/item flex items-center justify-between px-3 py-2.5 transition-all duration-200 hover:bg-white"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="size-7 rounded-lg overflow-hidden shrink-0 border border-ink/10 bg-ivory-soft">
+                                  <img
+                                    src={p.image}
+                                    alt={p.name}
+                                    className="size-full object-cover"
+                                    loading="lazy"
+                                  />
+                                </div>
+                                <div className="truncate">
+                                  <p className="font-sans text-[11px] font-medium text-ink truncate group-hover/item:text-gold transition-colors">
+                                    {p.name}
+                                  </p>
+                                  <p className="font-mono text-[8px] text-ink/40 uppercase tracking-wider">
+                                    {p.weight}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0 pl-2">
+                                <span className="font-mono text-[11px] font-bold text-ink">₹{p.price}</span>
+                                <div className="size-5 rounded-full bg-ink/6 flex items-center justify-center group-hover/item:bg-gold transition-all">
+                                  <ArrowUpRight className="size-3 text-ink/50 group-hover/item:text-ink transition-colors" />
+                                </div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Temporary saved toast */}
+                    {isJustSaved && (
+                      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 rounded-full bg-ink px-4 py-1.5 text-[10px] font-mono text-ivory font-semibold shadow-xl whitespace-nowrap">
+                        📌 Pinned to Garden Board!
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1137,7 +1145,7 @@ function WhyEvergreenSection() {
         <div className="grid grid-cols-12 gap-8">
           <div className="col-span-12 lg:col-span-6">
             <Reveal>
-              <SectionLabel index="06">Why Evergreen Media</SectionLabel>
+              <SectionLabel>Why Evergreen Media</SectionLabel>
             </Reveal>
             <Reveal delay={0.1}>
               <h2
@@ -1174,29 +1182,7 @@ function WhyEvergreenSection() {
                     aria-hidden="true"
                   />
 
-                  {/* Top Badge Lanyard Punch-Hole & Clip Detail */}
-                  <div className="relative mb-5 flex flex-col items-center">
-                    {/* Metallic rivet clip */}
-                    <div className="flex items-center gap-1.5 pb-2">
-                      <div className="size-1.5 rounded-full bg-gold/70 shadow-xs" />
-                      <div className="h-1 w-10 rounded-full bg-gradient-to-r from-gold/40 via-gold to-gold/40 shadow-xs" />
-                      <div className="size-1.5 rounded-full bg-gold/70 shadow-xs" />
-                    </div>
-                    {/* Badge slot cutout with inner depth */}
-                    <div className="h-1.5 w-12 rounded-full bg-ink/10 border border-ink/15 shadow-inner" />
-                  </div>
-
                   <div>
-                    {/* Badge Serial Header & Status Pill */}
-                    <div className="flex items-center justify-between border-b border-ink/8 pb-3.5">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-gold font-bold">
-                        {pillar.badgeId}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-700/20 bg-emerald-50/80 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-emerald-800 font-semibold shadow-xs">
-                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        {pillar.tag}
-                      </span>
-                    </div>
 
                     {/* Badge Crest Emblem & Titles */}
                     <div className="mt-5 flex items-start gap-4">
@@ -1234,22 +1220,7 @@ function WhyEvergreenSection() {
                     </div>
                   </div>
 
-                  {/* Badge Footer: Barcode & Auth Seal */}
-                  <div className="mt-6 pt-4 border-t border-dashed border-ink/15 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="font-mono text-[11px] tracking-[0.22em] text-ink/35 select-none font-bold">
-                        {pillar.barcode}
-                      </span>
-                      <span className="font-mono text-[8px] uppercase tracking-widest text-ink/40">
-                        AUTH {pillar.authCode}
-                      </span>
-                    </div>
 
-                    <div className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[8px] uppercase tracking-[0.2em] text-forest-deep font-semibold">
-                      <ShieldCheck className="size-2.5 text-gold" />
-                      <span>OFFICIAL</span>
-                    </div>
-                  </div>
                 </div>
               </Reveal>
             );
@@ -1267,7 +1238,7 @@ function WhyEvergreenSection() {
 const APPLICATIONS = [
   { label: "Home Gardening", image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=75&auto=format&fit=crop" },
   { label: "Terrace Gardening", image: "https://images.unsplash.com/photo-1531971589569-0d9370cbe1e5?w=600&q=75&auto=format&fit=crop" },
-  { label: "Nurseries", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=75&auto=format&fit=crop" },
+  { label: "Nurseries", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&q=75&auto=format&fit=crop" },
   { label: "Organic Farming", image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&q=75&auto=format&fit=crop" },
   { label: "Vegetable Crops", image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=75&auto=format&fit=crop" },
   { label: "Fruit Crops", image: "https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=600&q=75&auto=format&fit=crop" },
@@ -1280,7 +1251,7 @@ function ShopByApplicationSection() {
     <section className="bg-parchment py-24 lg:py-32" aria-label="Shop by application">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <Reveal className="text-center">
-          <SectionLabel index="08">Shop by application</SectionLabel>
+          <SectionLabel>Shop by application</SectionLabel>
           <h2
             className="mx-auto mt-5 max-w-2xl font-display font-medium leading-tight text-forest-deep"
             style={{ fontSize: "clamp(2.4rem, 4.5vw, 4rem)" }}
@@ -1348,139 +1319,7 @@ function ShopByApplicationSection() {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   9. PROCESS STORY
-══════════════════════════════════════════════════════════════════ */
-const PROCESS_STEPS = [
-  {
-    label: "Select",
-    step: "01",
-    description: "Only ingredients that meet our quality benchmark make it into the range.",
-    image: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=700&q=80&auto=format&fit=crop",
-  },
-  {
-    label: "Prepare",
-    step: "02",
-    description: "Carefully processed to preserve biological activity and nutrient integrity.",
-    image: "https://images.unsplash.com/photo-1589923188900-85dae523342b?w=700&q=80&auto=format&fit=crop",
-  },
-  {
-    label: "Nurture",
-    step: "03",
-    description: "Applied at the right moment in your plant's growing cycle for best results.",
-    image: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=700&q=80&auto=format&fit=crop",
-  },
-  {
-    label: "Grow",
-    step: "04",
-    description: "The outcome: a healthier soil profile, stronger roots and thriving plants.",
-    image: "https://images.unsplash.com/photo-1543257580-7269da773bf5?w=700&q=80&auto=format&fit=crop",
-  },
-];
 
-function ProcessStorySection() {
-  const [active, setActive] = useState(0);
-
-  return (
-    <section className="bg-forest-deep py-24 text-ivory lg:py-32" aria-label="Our process">
-      <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
-        {/* Header */}
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-5">
-            <Reveal>
-              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-gold/70">
-                (09) — Quality &amp; process
-              </p>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <h2
-                className="mt-5 font-display font-medium leading-[0.9] text-ivory"
-                style={{ fontSize: "clamp(2.8rem, 5vw, 4.5rem)" }}
-              >
-                Care at <span className="italic text-gold">every stage.</span>
-              </h2>
-            </Reveal>
-            <Reveal delay={0.2}>
-              <p className="mt-5 max-w-xs text-sm leading-relaxed text-ivory/55">
-                Quality isn't a final check — it's part of how we approach every decision from the
-                beginning.
-              </p>
-            </Reveal>
-
-            {/* Step selector */}
-            <div className="mt-10 flex flex-col">
-              {PROCESS_STEPS.map((step, i) => (
-                <button
-                  key={step.label}
-                  onClick={() => setActive(i)}
-                  className={`flex items-center gap-5 border-b py-5 text-left transition-all ${
-                    active === i ? "border-gold" : "border-ivory/10"
-                  }`}
-                >
-                  <span
-                    className={`font-mono text-[22px] leading-none transition-colors ${
-                      active === i ? "text-gold" : "text-ivory/20"
-                    }`}
-                  >
-                    {step.step}
-                  </span>
-                  <div>
-                    <p
-                      className={`font-mono text-[11px] uppercase tracking-[0.25em] transition-colors ${
-                        active === i ? "text-ivory" : "text-ivory/40"
-                      }`}
-                    >
-                      {step.label}
-                    </p>
-                    {active === i && (
-                      <motion.p
-                        className="mt-1 text-xs text-ivory/55"
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35 }}
-                      >
-                        {step.description}
-                      </motion.p>
-                    )}
-                  </div>
-                  {active === i && (
-                    <motion.div
-                      className="ml-auto"
-                      initial={{ x: -6, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                    >
-                      <ArrowRight className="size-3.5 text-gold" />
-                    </motion.div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Right image */}
-          <div className="col-span-12 lg:col-span-6 lg:col-start-7">
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={active}
-                src={PROCESS_STEPS[active]!.image}
-                alt={PROCESS_STEPS[active]!.label}
-                loading="lazy"
-                width={800}
-                height={900}
-                className="aspect-[4/5] w-full object-cover"
-                style={{ borderRadius: "min(0.8vw, 8px)" }}
-                initial={{ opacity: 0, scale: 1.04 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              />
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════════
    10. LEARN & GROW
@@ -1520,7 +1359,7 @@ function LearnAndGrowSection() {
         <div className="flex items-end justify-between">
           <Reveal>
             <div>
-              <SectionLabel index="10">Knowledge</SectionLabel>
+              <SectionLabel>Knowledge</SectionLabel>
               <h2
                 className="mt-4 font-display font-medium leading-tight text-forest-deep"
                 style={{ fontSize: "clamp(2.5rem, 5vw, 4.5rem)" }}
@@ -1615,7 +1454,7 @@ function CustomerStoriesSection() {
     <section className="bg-parchment py-24 lg:py-32" aria-label="Customer stories">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <Reveal className="text-center">
-          <SectionLabel index="11">Grower stories</SectionLabel>
+          <SectionLabel>Grower stories</SectionLabel>
           <h2
             className="mx-auto mt-4 max-w-lg font-display font-medium leading-tight text-forest-deep"
             style={{ fontSize: "clamp(2.4rem, 4.5vw, 4rem)" }}
@@ -1688,82 +1527,123 @@ function CustomerStoriesSection() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   12. FINAL CTA
+   FINAL CTA
 ══════════════════════════════════════════════════════════════════ */
 function FinalCtaSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-  const imgY = useTransform(scrollYProgress, [0, 1], ["8%", "-8%"]);
-
   return (
-    <section
-      ref={sectionRef}
-      className="relative overflow-hidden"
-      aria-label="Call to action"
-    >
-      {/* Parallax background */}
-      <div className="relative h-[80vh] min-h-[520px] overflow-hidden">
-        <motion.img
-          src={IMG.cta}
-          alt="Lush healthy crops growing in natural sunlight"
-          loading="lazy"
-          width={1600}
-          height={900}
-          className="size-full object-cover"
-          style={{ y: imgY }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(160deg, oklch(0.23 0.07 157.2 / 75%) 0%, oklch(0.18 0.05 157.2 / 85%) 100%)",
-          }}
-        />
-
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <Reveal>
-            <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-gold/70">
-              (12) — Start here
-            </p>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <h2
-              className="mx-auto mt-5 max-w-3xl font-display font-medium leading-[0.88] text-ivory"
-              style={{ fontSize: "clamp(3rem, 7vw, 7.5rem)" }}
-            >
-              Give your plants
-              <br />
-              <span className="italic text-gold">a better foundation.</span>
-            </h2>
-          </Reveal>
-          <Reveal delay={0.2}>
-            <p className="mt-6 max-w-md text-sm leading-relaxed text-ivory/60">
-              Explore the full Evergreen Media range — natural inputs for every stage of your
-              growing journey.
-            </p>
-          </Reveal>
-          <Reveal delay={0.3}>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-5">
-              <Link
-                to="/shop"
-                className="flex items-center gap-2 bg-gold px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-forest-deep transition-all hover:bg-ivory hover:-translate-y-0.5 hover:shadow-xl"
+    <section className="bg-parchment py-12 lg:py-16" aria-label="Call to action">
+      <div className="mx-auto max-w-[1400px] px-6 lg:px-10">
+        {/* ── Contained rounded card ── */}
+        <motion.div
+          className="overflow-hidden rounded-3xl"
+          style={{ boxShadow: "0 24px 64px 0 rgba(20,35,20,0.18)" }}
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className="grid min-h-[340px] grid-cols-1 lg:grid-cols-2">
+            {/* Left — image with floating badge */}
+            <div className="relative min-h-[280px] overflow-hidden lg:min-h-0">
+              <img
+                src={IMG.cta}
+                alt="Lush green field at golden hour"
+                loading="lazy"
+                className="absolute inset-0 size-full object-cover object-center"
+              />
+              {/* Right-edge fade into dark panel */}
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(to right, transparent 55%, rgba(14,24,16,0.88) 100%)" }}
+              />
+              {/* Floating review badge */}
+              <motion.div
+                className="absolute bottom-5 left-5 flex items-center gap-3 rounded-full bg-white/95 px-4 py-2.5 shadow-lg backdrop-blur-sm"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.45 }}
               >
-                Shop Products
-                <ArrowRight className="size-3" />
-              </Link>
-              <Link
-                to="/categories"
-                className="flex items-center gap-2 border border-ivory/35 px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-ivory transition-all hover:border-ivory hover:bg-ivory/10"
-              >
-                Explore Solutions
-                <ArrowUpRight className="size-3" />
-              </Link>
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className="text-amber-400 text-xs">★</span>
+                  ))}
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] font-bold leading-none" style={{ color: "#1e2d1a" }}>4.9</p>
+                  <p className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.1em] text-black/40">Trusted by growers</p>
+                </div>
+              </motion.div>
             </div>
-          </Reveal>
+
+            {/* Right — dark text panel */}
+            <div
+              className="flex flex-col justify-center px-8 py-10 lg:px-12 lg:py-12"
+              style={{ background: "oklch(0.16 0.06 157.2)" }}
+            >
+              {/* Eyebrow */}
+              <Reveal>
+                <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-gold/60">
+                  Natural Agricultural Inputs · MEX
+                </span>
+              </Reveal>
+
+              {/* Headline */}
+              <Reveal delay={0.08}>
+                <h2
+                  className="mt-3 font-display font-bold leading-[0.92] text-ivory"
+                  style={{ fontSize: "clamp(1.8rem, 3vw, 2.8rem)", letterSpacing: "-0.02em" }}
+                >
+                  Let's grow
+                  <br />
+                  <span className="italic text-gold">something better.</span>
+                </h2>
+              </Reveal>
+
+              {/* Body */}
+              <Reveal delay={0.14}>
+                <p className="mt-4 max-w-sm text-sm leading-relaxed text-ivory/50">
+                  Explore the full Evergreen Media range — natural inputs for every stage
+                  of your growing journey.
+                </p>
+              </Reveal>
+
+              {/* Buttons */}
+              <Reveal delay={0.2}>
+                <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <Link
+                    to="/shop"
+                    className="inline-flex items-center gap-2 rounded-full bg-gold px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-forest-deep transition-all duration-300 hover:-translate-y-0.5 hover:bg-ivory hover:shadow-xl active:translate-y-0"
+                  >
+                    Shop Products <ArrowRight className="size-3" />
+                  </Link>
+                  <Link
+                    to="/contact"
+                    className="inline-flex items-center gap-2 rounded-full border border-ivory/20 px-6 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ivory/75 transition-all duration-300 hover:-translate-y-0.5 hover:border-ivory/50 hover:text-ivory active:translate-y-0"
+                  >
+                    Get in Touch <ArrowUpRight className="size-3" />
+                  </Link>
+                </div>
+              </Reveal>
+
+              {/* Trust line */}
+              <Reveal delay={0.25}>
+                <p className="mt-5 font-mono text-[8px] uppercase tracking-[0.22em] text-ivory/25">
+                  100% Natural · All Crop Types · Premium Quality
+                </p>
+              </Reveal>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Copyright */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 px-1">
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink/30">
+            © 2026 Evergreen Media (MEX)
+          </span>
+          <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-ink/30">
+            Natural Agricultural Solutions · Tamil Nadu, India
+          </span>
         </div>
       </div>
     </section>

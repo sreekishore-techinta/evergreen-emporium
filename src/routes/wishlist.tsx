@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import { ProductCard, SectionLabel } from "@/components/storefront";
-import { products, useStore } from "@/lib/storefront";
+import { getProduct, products, useStore } from "@/lib/storefront";
 
 export const Route = createFileRoute("/wishlist")({
   head: () => ({
@@ -14,8 +14,22 @@ export const Route = createFileRoute("/wishlist")({
 });
 
 function WishlistPage() {
-  const { wishlist } = useStore();
-  const saved = products.filter((p) => wishlist.includes(p.id));
+  const { wishlist, hydrated } = useStore();
+  const saved = wishlist.map((id) => getProduct(id)).filter(Boolean) as typeof products;
+
+  // Wait for localStorage hydration before branching on wishlist length.
+  // The server always sees an empty wishlist — without this guard the
+  // "Nothing saved yet" empty-state gets SSR'd but the client may have items,
+  // causing React hydration error #418 (tree-level mismatch).
+  if (!hydrated) {
+    return (
+      <main className="mx-auto max-w-[1440px] px-6 pb-24 lg:px-10">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-forest/20 border-t-forest" />
+        </div>
+      </main>
+    );
+  }
 
   if (saved.length === 0) {
     return (

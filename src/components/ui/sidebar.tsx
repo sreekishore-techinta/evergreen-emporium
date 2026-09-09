@@ -638,10 +638,13 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean;
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
+  // Use a stable seed instead of Math.random() — random values produce
+  // different results on the server vs client, causing hydration error #418.
+  // The skeleton width is purely cosmetic so a fixed value per instance is fine.
   const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  }, []);
+    const seed = (props as { 'data-index'?: number })['data-index'] ?? 0;
+    return `${(seed % 4) * 10 + 50}%`; // cycles 50/60/70/80% based on index
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -654,6 +657,7 @@ const SidebarMenuSkeleton = React.forwardRef<
       <Skeleton
         className="h-4 max-w-(--skeleton-width) flex-1"
         data-sidebar="menu-skeleton-text"
+        suppressHydrationWarning
         style={
           {
             "--skeleton-width": width,

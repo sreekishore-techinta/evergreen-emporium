@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ordersApi, type ApiOrder } from "@/lib/api";
-import { getProduct, useStore } from "@/lib/storefront";
+import { getProduct, useStore, SLUG_TO_NUMERIC_ID } from "@/lib/storefront";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -372,28 +372,38 @@ function OrderSummary({
                 Order Summary
               </p>
               <div className="flex flex-col gap-4">
-                {cart.map(({ id, quantity }) => {
-                  const p = getProduct(id);
-                  if (!p) return null;
+                {cart.map((line) => {
+                  const p = getProduct(line.id);
+                  const name = line.name || p?.name || "Product";
+                  const price = line.price ?? p?.price ?? 0;
+                  const image = line.image || p?.image || "";
+                  const weight = line.weight || p?.weight || "";
+
                   return (
-                    <div key={id} className="flex items-center gap-3">
+                    <div key={line.id} className="flex items-center gap-3">
                       <div className="relative shrink-0">
-                        <img
-                          src={p.image}
-                          alt={p.name}
-                          className="size-14 rounded-lg object-cover ring-2 ring-forest/20 shadow-sm"
-                        />
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={name}
+                            className="size-14 rounded-lg object-cover ring-2 ring-forest/20 shadow-sm"
+                          />
+                        ) : (
+                          <div className="size-14 rounded-lg bg-gray-100 ring-2 ring-forest/20 flex items-center justify-center text-xs text-gray-400">
+                            IMG
+                          </div>
+                        )}
                         <span className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-forest font-mono text-[10px] font-bold text-ivory shadow ring-1 ring-white">
-                          {quantity}
+                          {line.quantity}
                         </span>
                       </div>
                       <div className="flex flex-1 items-start justify-between gap-2">
                         <div>
-                          <p className="text-sm font-bold leading-snug text-forest-deep">{p.name}</p>
-                          <p className="mt-0.5 font-mono text-xs font-semibold text-ink/75">{p.weight}</p>
+                          <p className="text-sm font-bold leading-snug text-forest-deep">{name}</p>
+                          {weight && <p className="mt-0.5 font-mono text-xs font-semibold text-ink/75">{weight}</p>}
                         </div>
                         <span className="shrink-0 font-mono text-base font-bold text-forest-deep">
-                          ₹{(p.price * quantity).toLocaleString("en-IN")}
+                          ₹{(price * line.quantity).toLocaleString("en-IN")}
                         </span>
                       </div>
                     </div>
@@ -515,7 +525,10 @@ function ConfirmationScreen({ order }: { order: ApiOrder }) {
           </div>
           <div className="flex justify-between py-3.5 text-sm">
             <span className="font-bold text-forest-deep">Date</span>
-            <span className="font-semibold text-forest-deep">
+            <span
+              className="font-semibold text-forest-deep"
+              suppressHydrationWarning
+            >
               {new Date(order.created_at).toLocaleDateString("en-IN", {
                 day: "numeric", month: "long", year: "numeric",
               })}
@@ -669,6 +682,12 @@ function CheckoutPage() {
     const res = await ordersApi.checkout({
       address: addressPayload,
       payment_method: payment,
+      items: cart.map((line) => {
+        const p = getProduct(line.id);
+        const num = Number(line.id);
+        const pid = !isNaN(num) && num > 0 ? num : (p?.numericId ?? SLUG_TO_NUMERIC_ID[line.id] ?? line.id);
+        return { product_id: pid, quantity: line.quantity };
+      }),
     });
     setPlacing(false);
     if (res.success && res.data) {
@@ -998,21 +1017,31 @@ function CheckoutPage() {
                     Items Ordered
                   </p>
                   <div className="flex flex-col gap-3">
-                    {cart.map(({ id, quantity }) => {
-                      const p = getProduct(id);
-                      if (!p) return null;
+                    {cart.map((line) => {
+                      const p = getProduct(line.id);
+                      const name = line.name || p?.name || "Product";
+                      const price = line.price ?? p?.price ?? 0;
+                      const image = line.image || p?.image || "";
+                      const weight = line.weight || p?.weight || "";
+
                       return (
-                        <div key={id} className="flex items-center gap-3 border-b border-ink/10 pb-3.5 last:border-0">
-                          <img src={p.image} alt={p.name} className="size-12 rounded-lg object-cover ring-1 ring-forest/20" />
+                        <div key={line.id} className="flex items-center gap-3 border-b border-ink/10 pb-3.5 last:border-0">
+                          {image ? (
+                            <img src={image} alt={name} className="size-12 rounded-lg object-cover ring-1 ring-forest/20" />
+                          ) : (
+                            <div className="size-12 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                              IMG
+                            </div>
+                          )}
                           <div className="flex flex-1 items-center justify-between gap-2">
                             <div>
-                              <p className="text-sm font-bold text-forest-deep">{p.name}</p>
+                              <p className="text-sm font-bold text-forest-deep">{name}</p>
                               <p className="font-mono text-xs font-semibold text-forest-deep/80">
-                                {p.weight} · Qty {quantity}
+                                {weight ? `${weight} · ` : ""}Qty {line.quantity}
                               </p>
                             </div>
                             <span className="font-mono text-base font-bold text-forest-deep">
-                              ₹{(p.price * quantity).toLocaleString("en-IN")}
+                              ₹{(price * line.quantity).toLocaleString("en-IN")}
                             </span>
                           </div>
                         </div>

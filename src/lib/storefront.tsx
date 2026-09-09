@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { API_BASE } from "@/lib/api";
 
 // ─── Local assets (used as fallback / packaging mockups) ─────────
 import microbesImage from "@/assets/evergreen-microbes.jpg";
@@ -53,8 +54,10 @@ export const ALL_CATEGORIES: ProductCategory[] = [
 // ─── Product type ────────────────────────────────────────────────
 export type Product = {
   id: string;
+  numericId?: number;
+  slug?: string;
   name: string;
-  category: ProductCategory;
+  category: ProductCategory | string;
   type: string;
   tagline: string;
   description: string;
@@ -416,18 +419,97 @@ export const products: Product[] = [
   },
 ];
 
+// ─── ID Mapping between DB IDs & Slugs ───────────────────────────
+export const ID_TO_SLUG: Record<string, string> = {
+  "1": "pseudomonas",
+  "2": "vam",
+  "3": "azospirillum",
+  "4": "paspo-bacteria",
+  "5": "trichoderma",
+  "6": "vermicompost",
+  "7": "bone-meal",
+  "8": "neem-cake",
+  "9": "fish-amino-acid",
+  "10": "panchakaviyam",
+  "11": "cocopeat",
+  "12": "potting-mix",
+};
+
+export const SLUG_TO_NUMERIC_ID: Record<string, number> = {
+  "pseudomonas": 1,
+  "vam": 2,
+  "azospirillum": 3,
+  "paspo-bacteria": 4,
+  "paspoBacteria": 4,
+  "trichoderma": 5,
+  "vermicompost": 6,
+  "bone-meal": 7,
+  "boneMeal": 7,
+  "neem-cake": 8,
+  "neemCake": 8,
+  "fish-amino-acid": 9,
+  "fishAminoAcid": 9,
+  "panchakaviyam": 10,
+  "cocopeat": 11,
+  "potting-mix": 12,
+  "pottingMix": 12,
+};
+
+// Dynamic cache for live API products
+export const dynamicProductCache = new Map<string, Product>();
+
+export function registerProduct(p: any) {
+  if (!p) return;
+  const idStr = String(p.id ?? "").trim();
+  if (!idStr) return;
+  const numId = typeof p.id === "number" ? p.id : (Number(idStr) || undefined);
+  const converted: Product = {
+    id: idStr,
+    numericId: numId,
+    slug: p.slug || idStr,
+    name: p.name || "",
+    category: (p.category_name || p.category || CATEGORY_BIO) as ProductCategory,
+    type: p.type || "",
+    tagline: p.tagline || "",
+    description: p.description || "",
+    longDescription: p.long_description || p.longDescription || "",
+    benefits: Array.isArray(p.benefits) ? p.benefits : [],
+    usage: p.usage_info || p.usage || "",
+    price: Number(p.discount_price ?? p.price ?? 0),
+    weight: p.weight || "",
+    rating: Number(p.rating || 4.8),
+    applications: Array.isArray(p.applications) ? p.applications : [],
+    image: p.primary_image_url || p.image || p.images?.[0]?.url || "",
+    badge: p.badge || undefined,
+  };
+  dynamicProductCache.set(idStr, converted);
+  if (p.slug) dynamicProductCache.set(p.slug, converted);
+}
+
 // ─── Cart / Store types ──────────────────────────────────────────
-type CartLine = { id: string; quantity: number };
+export type CartLine = {
+  id: string;
+  quantity: number;
+  name?: string;
+  price?: number;
+  image?: string;
+  weight?: string;
+  category?: string;
+  slug?: string;
+};
+
 type StoreContextValue = {
   cart: CartLine[];
   wishlist: string[];
-  addToCart: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
-  removeFromCart: (id: string) => void;
-  toggleWishlist: (id: string) => void;
+  addToCart: (id: string | number, itemData?: any) => void;
+  updateQuantity: (id: string | number, quantity: number) => void;
+  removeFromCart: (id: string | number) => void;
+  clearCart: () => void;
+  toggleWishlist: (id: string | number) => void;
   cartCount: number;
   cartTotal: number;
-  isWishlisted: (id: string) => boolean;
+  isWishlisted: (id: string | number) => boolean;
+  hydrated: boolean;
 };
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -443,50 +525,101 @@ function readStorage<T>(key: string, fallback: T): T {
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartLine[]>(() => readStorage("evergreen-cart", []));
-  const [wishlist, setWishlist] = useState<string[]>(() =>
-    readStorage("evergreen-wishlist", [])
-  );
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    window.localStorage.setItem("evergreen-cart", JSON.stringify(cart));
-  }, [cart]);
+    setCart(readStorage("evergreen-cart", []));
+    setWishlist(readStorage("evergreen-wishlist", []));
+    setHydrated(true);
+
+    // Fetch live API products to resolve any database products
+    fetch(`${API_BASE}/api/products?page_size=100`)
+      .then((r) => r.json())
+      .then((data) => {
+        const items = data?.data || data?.items || [];
+        if (Array.isArray(items)) {
+          items.forEach(registerProduct);
+          setCart((cur) => [...cur]);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
-    window.localStorage.setItem("evergreen-wishlist", JSON.stringify(wishlist));
-  }, [wishlist]);
+    if (hydrated) {
+      window.localStorage.setItem("evergreen-cart", JSON.stringify(cart));
+    }
+  }, [cart, hydrated]);
+
+  useEffect(() => {
+    if (hydrated) {
+      window.localStorage.setItem("evergreen-wishlist", JSON.stringify(wishlist));
+    }
+  }, [wishlist, hydrated]);
 
   const value = useMemo<StoreContextValue>(() => {
     const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0);
-    const cartTotal = cart.reduce(
-      (sum, line) =>
-        sum + (products.find((p) => p.id === line.id)?.price ?? 0) * line.quantity,
-      0
-    );
+    const cartTotal = cart.reduce((sum, line) => {
+      const p = getProduct(line.id);
+      const price = line.price ?? p?.price ?? 0;
+      return sum + price * line.quantity;
+    }, 0);
+
     return {
       cart,
       wishlist,
       cartCount,
       cartTotal,
-      addToCart: (id) =>
-        setCart((cur) =>
-          cur.some((l) => l.id === id)
-            ? cur.map((l) => (l.id === id ? { ...l, quantity: l.quantity + 1 } : l))
-            : [...cur, { id, quantity: 1 }]
-        ),
-      updateQuantity: (id, quantity) =>
+      hydrated,
+      addToCart: (id, itemData) => {
+        const strId = String(id);
+        if (itemData) registerProduct(itemData);
+        const p = itemData ? dynamicProductCache.get(strId) : getProduct(strId);
+        const snapshot = p ? {
+          name: p.name,
+          price: p.price,
+          image: p.image,
+          weight: p.weight,
+          category: p.category,
+          slug: p.slug,
+        } : {};
+
+        setCart((cur) => {
+          const existing = cur.find((l) => l.id === strId);
+          if (existing) {
+            return cur.map((l) =>
+              l.id === strId
+                ? { ...l, ...snapshot, quantity: l.quantity + 1 }
+                : l
+            );
+          }
+          return [...cur, { id: strId, quantity: 1, ...snapshot }];
+        });
+      },
+      updateQuantity: (id, quantity) => {
+        const strId = String(id);
         setCart((cur) =>
           quantity < 1
-            ? cur.filter((l) => l.id !== id)
-            : cur.map((l) => (l.id === id ? { ...l, quantity } : l))
-        ),
-      removeFromCart: (id) => setCart((cur) => cur.filter((l) => l.id !== id)),
-      toggleWishlist: (id) =>
+            ? cur.filter((l) => l.id !== strId)
+            : cur.map((l) => (l.id === strId ? { ...l, quantity } : l))
+        );
+      },
+      removeFromCart: (id) => {
+        const strId = String(id);
+        setCart((cur) => cur.filter((l) => l.id !== strId));
+      },
+      clearCart: () => setCart([]),
+      toggleWishlist: (id) => {
+        const strId = String(id);
         setWishlist((cur) =>
-          cur.includes(id) ? cur.filter((i) => i !== id) : [...cur, id]
-        ),
-      isWishlisted: (id) => wishlist.includes(id),
+          cur.includes(strId) ? cur.filter((i) => i !== strId) : [...cur, strId]
+        );
+      },
+      isWishlisted: (id) => wishlist.includes(String(id)),
     };
-  }, [cart, wishlist]);
+  }, [cart, wishlist, hydrated]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
@@ -497,8 +630,30 @@ export function useStore() {
   return ctx;
 }
 
-export function getProduct(id: string) {
-  return products.find((p) => p.id === id);
+export function getProduct(id: string | number): Product | undefined {
+  if (id === undefined || id === null) return undefined;
+  const strId = String(id).trim();
+
+  // 1. Dynamic cache
+  if (dynamicProductCache.has(strId)) {
+    return dynamicProductCache.get(strId);
+  }
+
+  // 2. ID_TO_SLUG (e.g. "1" -> "pseudomonas")
+  const mappedSlug = ID_TO_SLUG[strId];
+  if (mappedSlug) {
+    const found = products.find((p) => p.id === mappedSlug || p.slug === mappedSlug);
+    if (found) return found;
+  }
+
+  // 3. Static products by id, slug, or numericId
+  const num = Number(strId);
+  return products.find(
+    (p) =>
+      p.id === strId ||
+      p.slug === strId ||
+      (!isNaN(num) && p.numericId === num)
+  );
 }
 
 // ─── Convenience helpers ─────────────────────────────────────────

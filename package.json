@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "npm run build:prod",
+    "build:prod": "cross-env VITE_API_URL=https://white-armadillo-804949.hostingersite.com VITE_BASE_PATH=/ vite build && powershell -Command \"if (Test-Path 'dist') { Remove-Item -Recurse -Force 'dist' }; Copy-Item -Recurse -Force '.output/public' 'dist'; Copy-Item -Recurse -Force 'api' 'dist/api'; Copy-Item -Recurse -Force 'admin' 'dist/admin'; if (Test-Path 'dist/server') { Remove-Item -Recurse -Force 'dist/server' }; if (Test-Path 'dist/api/config/env.local.php') { Remove-Item -Force 'dist/api/config/env.local.php' }; if (Test-Path 'deploy.zip') { Remove-Item -Force 'deploy.zip' }; Set-Location dist; tar -a -cf ../deploy.zip *; Set-Location ..; Write-Host 'dist/ and deploy.zip ready'\"",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -76,6 +77,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
+    "cross-env": "^10.1.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",

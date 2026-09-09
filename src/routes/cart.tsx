@@ -15,7 +15,20 @@ export const Route = createFileRoute("/cart")({
 });
 
 function CartPage() {
-  const { cart, removeFromCart, cartTotal } = useStore();
+  const { cart, removeFromCart, cartTotal, hydrated } = useStore();
+
+  // Wait for the store to hydrate from localStorage before branching on cart
+  // length. Without this guard the server always renders cart.length === 0
+  // (empty), but the client may have items — causing React hydration error #418.
+  if (!hydrated) {
+    return (
+      <main className="mx-auto max-w-[1440px] px-6 pb-24 lg:px-10">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-forest/20 border-t-forest" />
+        </div>
+      </main>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -51,40 +64,53 @@ function CartPage() {
       <div className="mt-12 grid grid-cols-12 gap-10">
         {/* Line items */}
         <div className="col-span-12 lg:col-span-8">
-          {cart.map(({ id, quantity }) => {
-            const product = getProduct(id);
-            if (!product) return null;
+          {cart.map((line) => {
+            const product = getProduct(line.id);
+            const name = line.name || product?.name;
+            const price = line.price ?? product?.price ?? 0;
+            const image = line.image || product?.image;
+            const weight = line.weight || product?.weight;
+            const category = line.category || product?.category;
+            const slug = line.slug || product?.slug || product?.id || line.id;
+
+            if (!name && !product) return null;
             return (
-              <div key={id} className="flex items-center gap-6 border-b border-ink/10 py-6">
-                <Link to="/product/$id" params={{ id }}>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    width={80}
-                    height={80}
-                    className="size-20 rounded-[min(1vw,8px)] object-cover bg-ivory-soft"
-                  />
+              <div key={line.id} className="flex items-center gap-6 border-b border-ink/10 py-6">
+                <Link to="/product/$id" params={{ id: slug }}>
+                  {image ? (
+                    <img
+                      src={image}
+                      alt={name}
+                      width={80}
+                      height={80}
+                      className="size-20 rounded-[min(1vw,8px)] object-cover bg-ivory-soft"
+                    />
+                  ) : (
+                    <div className="size-20 rounded-[min(1vw,8px)] bg-ivory-soft flex items-center justify-center text-xs text-ink/40 font-mono">
+                      IMG
+                    </div>
+                  )}
                 </Link>
                 <div className="flex flex-1 flex-col gap-2">
                   <Link
                     to="/product/$id"
-                    params={{ id }}
+                    params={{ id: slug }}
                     className="font-display text-xl font-medium text-forest-deep hover:text-gold"
                   >
-                    {product.name}
+                    {name}
                   </Link>
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
-                    {product.category} · {product.weight}
+                    {category}{weight ? ` · ${weight}` : ""}
                   </p>
-                  <QuantityControl id={id} quantity={quantity} />
+                  <QuantityControl id={line.id} quantity={line.quantity} />
                 </div>
                 <div className="flex flex-col items-end gap-3">
                   <span className="font-display text-xl text-forest-deep">
-                    ₹{(product.price * quantity).toLocaleString("en-IN")}
+                    ₹{(price * line.quantity).toLocaleString("en-IN")}
                   </span>
                   <button
-                    onClick={() => removeFromCart(id)}
-                    aria-label={`Remove ${product.name} from cart`}
+                    onClick={() => removeFromCart(line.id)}
+                    aria-label={`Remove ${name} from cart`}
                     className="text-ink/35 transition-colors hover:text-red-500"
                   >
                     <Trash2 className="size-4" />

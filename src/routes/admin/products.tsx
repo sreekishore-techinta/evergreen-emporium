@@ -77,11 +77,13 @@ function ProductsPage() {
   async function save() {
     if (!form.name || !form.category_id || !form.price) { toast("Name, category and price are required.", false); return; }
     setSaving(true);
-    const payload = {
+    const payload: any = {
       ...form,
       benefits:     form.benefits_text?.split("\n").map(s => s.trim()).filter(Boolean) ?? [],
       applications: form.apps_text?.split(",").map(s => s.trim()).filter(Boolean) ?? [],
     };
+    if (!payload.sku) delete payload.sku;
+    if (!payload.type) delete payload.type;
     const res = editing
       ? await adminProductsApi.update(editing.id, payload)
       : await adminProductsApi.create(payload as Parameters<typeof adminProductsApi.create>[0]);
@@ -263,10 +265,6 @@ function ProductsPage() {
                     {cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="lbl">SKU</label><input className="inp" value={form.sku ?? ""} onChange={field("sku")} placeholder="Auto-generated if blank" /></div>
-                <div><label className="lbl">Type</label><input className="inp" value={form.type ?? ""} onChange={field("type")} /></div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div><label className="lbl">Price (₹) *</label><input className="inp" type="number" min="0" step="0.01" value={form.price ?? ""} onChange={field("price")} /></div>

@@ -17,10 +17,14 @@ export const API_BASE: string = (() => {
 })();
 
 // ── Token storage ──────────────────────────────────────────────────
-const TOKEN_KEY = 'em_user_token';
-export const getToken  = ()      => localStorage.getItem(TOKEN_KEY) ?? '';
-export const setToken  = (t: string) => localStorage.setItem(TOKEN_KEY, t);
-export const clearToken = ()     => localStorage.removeItem(TOKEN_KEY);
+// Guard every localStorage access: during SSR (Node.js) localStorage doesn't
+// exist at all — not even as undefined — so a bare reference crashes the
+// server render and causes React hydration error #418.
+const TOKEN_KEY  = 'em_user_token';
+const isBrowser  = typeof window !== 'undefined';
+export const getToken   = ()           => isBrowser ? (localStorage.getItem(TOKEN_KEY) ?? '') : '';
+export const setToken   = (t: string)  => { if (isBrowser) localStorage.setItem(TOKEN_KEY, t); };
+export const clearToken = ()           => { if (isBrowser) localStorage.removeItem(TOKEN_KEY); };
 
 // ── Shared types ───────────────────────────────────────────────────
 export interface ApiResponse<T = unknown> {
@@ -354,9 +358,10 @@ export const ordersApi = {
   checkout: (data: {
     address: CheckoutAddress;
     payment_method: string;
+    items: { product_id: number; quantity: number }[];
     coupon_code?: string;
     notes?: string;
-  }) => request<ApiOrder>('POST', '/api/checkout', data, true),
+  }) => request<ApiOrder>('POST', '/api/checkout', data, false), // no auth needed — guest checkout supported
 
   list: (page = 1) =>
     requestPaginated<ApiOrder>('/api/orders', { page, page_size: 10 }),

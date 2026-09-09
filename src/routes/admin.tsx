@@ -146,7 +146,10 @@ function AdminShell() {
             {NAV.find(n => pathname.startsWith(n.to))?.label ?? "Admin"}
           </h1>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden sm:block text-xs text-gray-400">
+            <span
+              className="hidden sm:block text-xs text-gray-400"
+              suppressHydrationWarning
+            >
               {new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
             </span>
             <button className="relative p-2 rounded-full hover:bg-gray-100 transition-colors">

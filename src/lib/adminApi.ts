@@ -4,10 +4,14 @@
  */
 
 // Base URL — paths in this file already include /api/admin/...
-// so do NOT add /api here or every request will hit /api/api/...
-export const ADMIN_API =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  "http://localhost/evergreen-emporium";
+// Empty string = relative URLs, which work correctly on the live domain.
+// Dev with XAMPP: set VITE_API_URL=http://localhost/evergreen-emporium in .env.local
+export const ADMIN_API: string = (() => {
+  const raw = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
+  if (!raw) return ""; // production — use relative /api/* paths
+  // Strip trailing /api or /api/ if accidentally included
+  return raw.replace(/\/api\/?$/, "");
+})();
 
 // ── Token helpers ──────────────────────────────────────────────────
 // Guard every localStorage access so SSR (server-side rendering) doesn't crash

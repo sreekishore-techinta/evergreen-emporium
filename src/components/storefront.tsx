@@ -430,11 +430,18 @@ function FooterColumn({
   );
 }
 
-/* ─── Shared primitives ─────────────────────────────────────────── */
-export function SectionLabel({ index, children }: { index: string; children: string }) {
+export function SectionLabel({
+  index,
+  children,
+  className = "",
+}: {
+  index?: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <p className="font-mono text-[10px] font-bold uppercase tracking-[0.12em] text-forest/70">
-      ({index}) — {children}
+    <p className={`font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-forest/70 ${className}`}>
+      {children}
     </p>
   );
 }
@@ -524,7 +531,7 @@ export function ProductCard({
         <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-ink/60">{product.description ?? ""}</p>
         <Button
           variant="outline"
-          onClick={() => addToCart(String(product.id))}
+          onClick={() => addToCart(String(product.id), product)}
           className="mt-3 w-full rounded-full border-forest/25 text-forest transition-all duration-300 hover:-translate-y-0.5 hover:border-forest hover:bg-forest hover:text-ivory hover:shadow-md active:translate-y-0"
         >
           Add to Cart
@@ -543,14 +550,14 @@ export function PremiumProductCard({ product }: { product: CardProduct }) {
   const img = cardImage(product);
 
   function handleAddToCart() {
-    addToCart(String(product.id));
+    addToCart(String(product.id), product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   }
 
   return (
     <motion.article
-      className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-ink/5 transition-shadow duration-300 hover:shadow-xl"
+      className="group relative flex flex-col h-full overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-ink/5 transition-shadow duration-300 hover:shadow-xl"
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       initial={{ opacity: 0, y: 24 }}
@@ -813,7 +820,7 @@ export function QuickViewModal({
               </div>
               <button
                 onClick={() => {
-                  for (let i = 0; i < qty; i++) addToCart(String(product.id));
+                  for (let i = 0; i < qty; i++) addToCart(String(product.id), product);
                   onClose();
                 }}
                 className="w-full rounded-xl bg-forest py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-ivory transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest-deep hover:shadow-lg active:translate-y-0"

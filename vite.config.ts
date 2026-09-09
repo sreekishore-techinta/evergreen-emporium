@@ -6,10 +6,12 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// VITE_BASE_PATH is set by build:prod to /evergreen-emporium/ for Hostinger subdirectory.
+// In dev (npm run dev) it is undefined, so base defaults to "/" which is correct for XAMPP.
+const basePath = process.env.VITE_BASE_PATH ?? "/";
+
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
     server: { entry: "server" },
     prerender: {
       enabled: true,
@@ -23,10 +25,13 @@ export default defineConfig({
     },
   },
   vite: {
+    // Set base path so all asset URLs in index.html are prefixed correctly.
+    // Dev: base = "/"  → assets at /assets/...
+    // Prod: base = "/evergreen-emporium/"  → assets at /evergreen-emporium/assets/...
+    base: basePath,
     server: {
       proxy: {
-        // Forward /api/* to XAMPP PHP backend (no path rewrite needed —
-        // XAMPP serves at /evergreen-emporium/api/*)
+        // Forward ALL /api/* requests to XAMPP PHP backend in dev.
         "/api": {
           target: "http://localhost/evergreen-emporium",
           changeOrigin: true,

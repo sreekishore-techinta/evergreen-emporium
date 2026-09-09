@@ -153,7 +153,7 @@ function ProductPage() {
               >+</Button>
             </div>
             <Button
-              onClick={() => { for (let i = 0; i < quantity; i++) addToCart(String(product.id)); }}
+              onClick={() => { for (let i = 0; i < quantity; i++) addToCart(String(product.id), product); }}
               disabled={product.stock === 0}
               className="rounded-full bg-forest px-8 text-ivory transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest-deep hover:shadow-lg disabled:opacity-50 active:translate-y-0"
             >

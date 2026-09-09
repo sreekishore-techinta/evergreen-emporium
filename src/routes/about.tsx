@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { useRef } from "react";
+import approachProductImage from "@/assets/WhatsApp Image 2026-09-03 at 1.08.19 PM.jpeg";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -19,11 +20,11 @@ const IMG = {
   hero:      "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=1800&q=90&auto=format&fit=crop",
   soil:      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=900&q=85&auto=format&fit=crop",
   roots:     "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=900&q=85&auto=format&fit=crop",
-  plant:     "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=85&auto=format&fit=crop",
+  plant:     "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=900&q=85&auto=format&fit=crop",
   growth:    "https://images.unsplash.com/photo-1543257580-7269da773bf5?w=900&q=85&auto=format&fit=crop",
   field:     "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1400&q=85&auto=format&fit=crop",
   organic:   "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=900&q=85&auto=format&fit=crop",
-  nursery:   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=80&auto=format&fit=crop",
+  nursery:   "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=700&q=80&auto=format&fit=crop",
   terrace:   "https://images.unsplash.com/photo-1444930694458-01babf71870c?w=700&q=80&auto=format&fit=crop",
   homeGarden:"https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=700&q=80&auto=format&fit=crop",
   farmer:    "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=700&q=80&auto=format&fit=crop",
@@ -277,15 +278,15 @@ function BrandIntroSection() {
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
         <div className="grid grid-cols-12 gap-x-12 gap-y-10 items-center">
 
-          {/* Left — large editorial text */}
-          <div className="col-span-12 lg:col-span-6">
+          {/* Left — editorial text */}
+          <div className="col-span-12 lg:col-span-5">
             <Reveal>
               <Eyebrow>Our approach</Eyebrow>
             </Reveal>
             <Reveal delay={0.1}>
               <h2
                 className="mt-5 font-display font-bold leading-[0.88] text-forest-deep"
-                style={{ fontSize: "clamp(2.4rem, 5vw, 5rem)", letterSpacing: "-0.03em" }}
+                style={{ fontSize: "clamp(2.4rem, 4.5vw, 4.5rem)", letterSpacing: "-0.03em" }}
               >
                 More than inputs.
                 <br />
@@ -293,7 +294,7 @@ function BrandIntroSection() {
               </h2>
             </Reveal>
             <Reveal delay={0.2}>
-              <p className="mt-7 max-w-md text-base leading-loose text-ink/65">
+              <p className="mt-7 text-base leading-loose text-ink/65">
                 Evergreen Media was built on one conviction: the best growing outcomes come from
                 working with nature, not against it. Our range — spanning microbial cultures,
                 organic fertilisers, soil conditioners and growing media — is designed to support
@@ -301,7 +302,7 @@ function BrandIntroSection() {
               </p>
             </Reveal>
             <Reveal delay={0.25}>
-              <p className="mt-4 max-w-md text-base leading-loose text-ink/65">
+              <p className="mt-4 text-base leading-loose text-ink/65">
                 We don't cut corners, replace biology with chemicals, or chase shortcuts. We source
                 with care, formulate with intent and present everything clearly — so every grower
                 can make the right choice for their plants.
@@ -309,29 +310,31 @@ function BrandIntroSection() {
             </Reveal>
           </div>
 
-          {/* Right — split image pair */}
-          <div className="col-span-12 lg:col-span-5 lg:col-start-8">
-            <Reveal delay={0.15} y={48}>
-              <div className="relative">
-                <img
-                  src={IMG.soil}
-                  alt="Young plant growing from rich soil with natural fertilizer — the foundation for better growing"
-                  loading="lazy"
-                  className="aspect-[4/5] w-full rounded-2xl object-cover"
-                />
+          {/* Right — large prominent product image card */}
+          <div className="col-span-12 lg:col-span-7">
+            <Reveal delay={0.15} y={40}>
+              <div className="relative overflow-visible">
+                <div className="overflow-hidden rounded-2xl sm:rounded-3xl border border-ink/8 shadow-[0_24px_60px_rgba(20,35,20,0.16)] transition-transform duration-500 hover:scale-[1.01]">
+                  <img
+                    src={approachProductImage}
+                    alt="Evergreen Media Panchkaviyam natural organic liquid formulation and ingredients"
+                    loading="lazy"
+                    className="aspect-[3/2] w-full object-cover object-center"
+                  />
+                </div>
                 {/* Floating stat card */}
                 <motion.div
-                  className="absolute -bottom-6 -left-6 rounded-2xl bg-forest-deep p-5 shadow-2xl"
+                  className="absolute -bottom-5 -left-4 sm:-bottom-6 sm:-left-6 rounded-2xl bg-forest-deep p-4 sm:p-5 shadow-2xl border border-gold/20"
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                  <p className="font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-gold/70">
+                  <p className="font-mono text-[9px] font-bold uppercase tracking-[0.08em] text-gold/80">
                     Our range
                   </p>
-                  <p className="mt-1 font-display text-3xl font-bold text-ivory">12+</p>
-                  <p className="mt-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.06em] text-ivory/50">
+                  <p className="mt-1 font-display text-2xl sm:text-3xl font-bold text-ivory">12+</p>
+                  <p className="mt-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.06em] text-ivory/60">
                     Natural products
                   </p>
                 </motion.div>
