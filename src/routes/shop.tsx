@@ -232,7 +232,7 @@ function ShopPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="border border-ink/20 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/55 transition-colors hover:border-forest hover:text-forest disabled:pointer-events-none disabled:opacity-30"
+              className="border-2 border-ink/50 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink transition-all duration-200 hover:border-forest hover:bg-forest hover:text-ivory disabled:pointer-events-none disabled:opacity-30"
             >
               Prev
             </button>
@@ -240,10 +240,10 @@ function ShopPage() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-colors ${
+                className={`border-2 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] transition-all duration-200 ${
                   p === page
                     ? "border-forest bg-forest text-ivory"
-                    : "border-ink/20 text-ink/55 hover:border-forest hover:text-forest"
+                    : "border-ink/50 text-ink hover:border-forest hover:bg-forest hover:text-ivory"
                 }`}
               >
                 {p}
@@ -252,7 +252,7 @@ function ShopPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="border border-ink/20 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/55 transition-colors hover:border-forest hover:text-forest disabled:pointer-events-none disabled:opacity-30"
+              className="border-2 border-ink/50 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink transition-all duration-200 hover:border-forest hover:bg-forest hover:text-ivory disabled:pointer-events-none disabled:opacity-30"
             >
               Next
             </button>
@@ -270,7 +270,7 @@ function ShopPage() {
                 <button
                   key={cat.id}
                   onClick={() => { setCategorySlug(cat.slug); setPage(1); }}
-                  className="rounded-full border border-forest/20 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-forest transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest hover:text-ivory hover:shadow-md active:translate-y-0"
+                  className="rounded-full border-2 border-forest px-6 py-3 font-mono text-[10px] uppercase tracking-[0.2em] text-forest transition-all duration-300 hover:-translate-y-0.5 hover:bg-forest hover:text-ivory hover:shadow-lg active:translate-y-0"
                 >
                   {cat.name}
                 </button>

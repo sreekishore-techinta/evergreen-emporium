@@ -24,7 +24,7 @@ import {
   Sun,
   Zap,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import heroImage from "@/assets/evergreen-hero.jpg";
 import homeHeroImage from "@/assets/home hero.png";
 import storyImage from "@/assets/evergreen-story.jpg";
@@ -35,6 +35,7 @@ import {
   CATEGORY_ORGANIC,
   products,
 } from "@/lib/storefront";
+import { productsApi, type ApiProduct } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -462,9 +463,9 @@ function CategoryCard({
           className="absolute inset-x-0 bottom-0 h-1/2"
           style={{
             background:
-              "linear-gradient(to top, oklch(0.23 0.07 157.2 / 90%) 0%, transparent 100%)",
+              "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)",
           }}
-          animate={{ opacity: hovered ? 1 : 0.7 }}
+          animate={{ opacity: hovered ? 1 : 0.75 }}
           transition={{ duration: 0.3 }}
         />
 
@@ -475,7 +476,7 @@ function CategoryCard({
               <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-gold/80">
                 {cat.tag}
               </span>
-              <h3 className="mt-1 font-display text-xl font-medium text-ivory">{cat.short}</h3>
+              <h3 className="mt-1 font-display text-xl font-medium text-white">{cat.short}</h3>
               <p className="mt-0.5 font-mono text-[9px] text-ivory/55">{cat.description}</p>
             </div>
             <motion.div
@@ -538,9 +539,38 @@ function CategoriesSection() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   4. FEATURED PRODUCTS
+   4. FEATURED PRODUCTS — driven by is_featured flag in Admin Panel
+   Admin: Products → click the ★ star to feature/unfeature any product.
+   Falls back to first 4 static products if the API has none featured.
 ══════════════════════════════════════════════════════════════════ */
 function FeaturedProductsSection() {
+  const [apiProducts, setApiProducts] = useState<ApiProduct[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    productsApi.featured(8).then((res) => {
+      if (cancelled) return;
+      if (res.success && res.data && res.data.length > 0) {
+        setApiProducts(res.data);
+      } else {
+        // API returned no featured products — use static fallback
+        setApiProducts(null);
+      }
+      setLoading(false);
+    }).catch(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Determine what to show:
+  // - While loading: show skeleton placeholders
+  // - API products found: show up to 4 featured
+  // - Fallback: first 4 static catalogue products
+  const displayProducts = apiProducts ?? null;
+  const staticFallback  = products.slice(0, 4);
+
   return (
     <section className="bg-ivory py-24 lg:py-32" aria-label="Featured products">
       <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
@@ -567,23 +597,37 @@ function FeaturedProductsSection() {
           </Reveal>
         </div>
 
-        {/* Product grid — first 4 from the real catalogue */}
+        {/* Product grid */}
         <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8 auto-rows-fr">
-          {products.slice(0, 4).map((product) => (
-            <PremiumProductCard key={product.id} product={product} />
-          ))}
+          {loading ? (
+            /* Skeleton placeholders while fetching */
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse rounded-2xl bg-ivory-soft" style={{ aspectRatio: "3/4" }} />
+            ))
+          ) : displayProducts ? (
+            /* Live API featured products */
+            displayProducts.slice(0, 4).map((product) => (
+              <PremiumProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            /* Static fallback */
+            staticFallback.map((product) => (
+              <PremiumProductCard key={product.id} product={product} />
+            ))
+          )}
         </div>
 
         {/* Bottom CTA */}
         <Reveal delay={0.2} className="mt-16 text-center">
           <Link
             to="/shop"
-            className="inline-flex items-center gap-3 border border-forest/20 px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-forest transition-all hover:border-forest hover:bg-forest hover:text-ivory"
+            className="inline-flex items-center gap-3 border-2 border-forest px-8 py-4 font-mono text-[10px] uppercase tracking-[0.25em] text-forest transition-all duration-300 hover:border-forest hover:bg-forest hover:text-ivory hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
           >
             View all products
             <ArrowRight className="size-3" />
           </Link>
         </Reveal>
+
       </div>
     </section>
   );

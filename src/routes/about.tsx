@@ -207,7 +207,7 @@ function HeroSection() {
                   animate={{ y: "0%" }}
                   transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  Growing
+                  <span style={{ color: "#ffffff" }}>Growing</span>
                   <br />
                   <span className="italic text-ivory">
                     with Purpose.
@@ -626,7 +626,7 @@ function PhilosophySection() {
                 >
                   <div
                     className="mb-3 h-px w-10"
-                    style={{ background: "oklch(0.64 0.09 77.6 / 60%)" }}
+                    style={{ background: "rgba(255,255,255,0.60)" }}
                   />
                   <p className="font-display text-base font-bold italic leading-snug text-ivory">
                     "Not more chemistry.
@@ -737,24 +737,23 @@ function ProductWorldSection() {
         </div>
 
         {/* Product family cards */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-stretch">
           {PRODUCT_FAMILIES.map((fam, i) => (
-            <Reveal key={fam.family} delay={i * 0.1}>
-              <div className="group flex flex-col overflow-hidden rounded-2xl ring-1 ring-ink/8 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+            <Reveal key={fam.family} delay={i * 0.1} className="h-full">
+              <div className="group flex flex-col overflow-hidden rounded-2xl ring-1 ring-ink/8 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl h-full">
                 {/* Image */}
-                <div className="relative aspect-[3/2] overflow-hidden">
+                <div className="relative h-52 overflow-hidden shrink-0">
                   <img
                     src={fam.image}
                     alt={fam.family}
                     loading="lazy"
                     className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${fam.color}ee 0%, transparent 60%)` }} />
                   <div className="absolute inset-x-0 bottom-0 p-5">
-                    <span className="font-mono text-[9px] font-bold text-white/60">{fam.number}</span>
+                    <span className="font-mono text-[9px] font-bold text-white/80">{fam.number}</span>
                     <h3
-                      className="mt-1 font-display font-bold leading-tight text-white"
-                      style={{ fontSize: "clamp(1.1rem, 2vw, 1.4rem)", letterSpacing: "-0.02em" }}
+                      className="mt-1 font-display font-bold leading-tight"
+                      style={{ fontSize: "clamp(1.1rem, 2vw, 1.4rem)", letterSpacing: "-0.02em", color: "#ffffff" }}
                     >
                       {fam.family}
                     </h3>
@@ -822,18 +821,18 @@ function QualitySection() {
             </Reveal>
             <Reveal delay={0.1}>
               <h2
-                className="mt-5 font-display font-bold leading-[0.9] text-ivory"
-                style={{ fontSize: "clamp(2.2rem, 4.5vw, 4.5rem)", letterSpacing: "-0.03em" }}
+                className="mt-5 font-display font-bold leading-[0.9]"
+                style={{ fontSize: "clamp(2.2rem, 4.5vw, 4.5rem)", letterSpacing: "-0.03em", color: "#ffffff" }}
               >
                 Quality in
                 <br />
-                <span className="italic text-gold">every choice.</span>
+                <span className="italic" style={{ color: "oklch(0.82 0.09 77.6)" }}>every choice.</span>
               </h2>
             </Reveal>
           </div>
           <div className="col-span-12 lg:col-span-5 lg:col-start-8">
             <Reveal delay={0.15}>
-              <p className="text-base leading-relaxed text-ivory/55">
+              <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.80)" }}>
                 Quality isn't a final checkpoint — it's the standard applied to every decision
                 from the very first step of sourcing to the moment the product reaches your growing system.
               </p>
@@ -845,32 +844,35 @@ function QualitySection() {
           {QUALITY_STEPS.map((s, i) => (
             <Reveal key={s.label} delay={i * 0.1} className="h-full">
               <div
-                className="group relative flex h-full flex-col justify-between rounded-2xl p-6 sm:p-7 ring-1 ring-ivory/10 transition-all duration-300 hover:ring-gold/40 hover:bg-white/[0.08]"
-                style={{ background: "rgba(255,255,255,0.05)" }}
+                className="group relative flex h-full flex-col justify-between rounded-2xl p-6 sm:p-7 transition-all duration-300"
+                style={{
+                  background: "rgba(255,255,255,0.10)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                }}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] font-bold tracking-widest text-gold/70">
+                    <span className="font-mono text-[10px] font-bold tracking-widest" style={{ color: "oklch(0.82 0.09 77.6)" }}>
                       STEP {s.step}
                     </span>
-                    <span className="h-1.5 w-1.5 rounded-full bg-gold/40 group-hover:bg-gold transition-colors" />
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: "oklch(0.82 0.09 77.6)" }} />
                   </div>
                   <h3
-                    className="mt-4 font-display font-bold text-ivory"
-                    style={{ fontSize: "clamp(1.5rem, 2vw, 1.9rem)", letterSpacing: "-0.02em" }}
+                    className="mt-4 font-display font-bold"
+                    style={{ fontSize: "clamp(1.5rem, 2vw, 1.9rem)", letterSpacing: "-0.02em", color: "#ffffff" }}
                   >
                     {s.label}
                   </h3>
-                  <p className="mt-3 text-xs sm:text-[13px] leading-relaxed text-ivory/60">
+                  <p className="mt-3 text-xs sm:text-[13px] leading-relaxed" style={{ color: "rgba(255,255,255,0.80)" }}>
                     {s.desc}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-ivory/10 flex items-center justify-between">
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-ivory/40">
+                <div className="mt-6 pt-4 flex items-center justify-between" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+                  <span className="font-mono text-[9px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.65)" }}>
                     {i === QUALITY_STEPS.length - 1 ? "Cycle Complete" : `Next: Step 0${i + 2}`}
                   </span>
-                  <ArrowRight className="size-3.5 text-gold/60 transition-transform duration-300 group-hover:translate-x-1" />
+                  <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-1" style={{ color: "oklch(0.82 0.09 77.6)" }} />
                 </div>
               </div>
             </Reveal>

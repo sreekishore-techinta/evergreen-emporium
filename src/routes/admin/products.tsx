@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
-import { Plus, Search, Edit2, Trash2, ImagePlus, Star, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, ImagePlus, Star, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, X, Upload, Loader2 } from "lucide-react";
 import { adminProductsApi, adminCategoriesApi, type AdminProduct, type AdminCategory } from "@/lib/adminApi";
 
 export const Route = createFileRoute("/admin/products")({
@@ -19,6 +19,13 @@ const EMPTY: Partial<AdminProduct> & { benefits_text: string; apps_text: string 
 type Toast = { id: number; msg: string; ok: boolean };
 let tid = 0;
 
+type PendingImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+  isPrimary: boolean;
+};
+
 function ProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [cats, setCats]         = useState<AdminCategory[]>([]);
@@ -33,7 +40,10 @@ function ProductsPage() {
   const [form, setForm]         = useState({ ...EMPTY });
   const [toasts, setToasts]     = useState<Toast[]>([]);
   const [saving, setSaving]     = useState(false);
+  const [savingText, setSavingText] = useState("");
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const imgRef = useRef<HTMLInputElement>(null);
+  const modalFileInputRef = useRef<HTMLInputElement>(null);
 
   function toast(msg: string, ok = true) {
     const id = ++tid;
@@ -56,9 +66,15 @@ function ProductsPage() {
 
   useEffect(() => { load(); }, [page, catFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  function clearPending() {
+    pendingImages.forEach(img => URL.revokeObjectURL(img.previewUrl));
+    setPendingImages([]);
+  }
+
   function openAdd() {
     setEditing(null);
     setForm({ ...EMPTY });
+    clearPending();
     setModal("add");
   }
 
@@ -69,14 +85,67 @@ function ProductsPage() {
       benefits_text: Array.isArray(p.benefits) ? p.benefits.join("\n") : "",
       apps_text:     Array.isArray(p.applications) ? p.applications.join(", ") : "",
     });
+    clearPending();
     setModal("edit");
   }
 
-  function openImages(p: AdminProduct) { setEditing(p); setModal("images"); }
+  function openImages(p: AdminProduct) {
+    setEditing(p);
+    setModal("images");
+  }
+
+  function handleFilesSelected(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const newPending: PendingImage[] = [];
+    const hasExistingPrimary = pendingImages.some(p => p.isPrimary);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > 5 * 1024 * 1024) {
+        toast(`"${file.name}" exceeds the 5MB size limit.`, false);
+        continue;
+      }
+      const previewUrl = URL.createObjectURL(file);
+      newPending.push({
+        id: Math.random().toString(36).substring(2, 9),
+        file,
+        previewUrl,
+        isPrimary: !hasExistingPrimary && i === 0 && pendingImages.length === 0,
+      });
+    }
+
+    setPendingImages(prev => [...prev, ...newPending]);
+  }
+
+  function removePendingImage(id: string) {
+    setPendingImages(prev => {
+      const target = prev.find(p => p.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      const filtered = prev.filter(p => p.id !== id);
+      if (target?.isPrimary && filtered.length > 0) {
+        filtered[0].isPrimary = true;
+      }
+      return filtered;
+    });
+  }
+
+  function setPendingPrimary(id: string) {
+    setPendingImages(prev =>
+      prev.map(img => ({
+        ...img,
+        isPrimary: img.id === id,
+      }))
+    );
+  }
 
   async function save() {
-    if (!form.name || !form.category_id || !form.price) { toast("Name, category and price are required.", false); return; }
+    if (!form.name || !form.category_id || !form.price) {
+      toast("Name, category and price are required.", false);
+      return;
+    }
     setSaving(true);
+    setSavingText(editing ? "Updating product…" : "Creating product…");
+
     const payload: any = {
       ...form,
       benefits:     form.benefits_text?.split("\n").map(s => s.trim()).filter(Boolean) ?? [],
@@ -84,12 +153,66 @@ function ProductsPage() {
     };
     if (!payload.sku) delete payload.sku;
     if (!payload.type) delete payload.type;
-    const res = editing
-      ? await adminProductsApi.update(editing.id, payload)
-      : await adminProductsApi.create(payload as Parameters<typeof adminProductsApi.create>[0]);
-    setSaving(false);
-    if (res.success) { toast(editing ? "Product updated." : "Product created."); setModal(null); load(); }
-    else toast(res.message ?? "Save failed.", false);
+
+    try {
+      if (editing) {
+        const res = await adminProductsApi.update(editing.id, payload);
+        if (!res.success) {
+          toast(res.message ?? "Save failed.", false);
+          setSaving(false);
+          return;
+        }
+
+        // If new pending images were selected in edit mode, upload them now
+        if (pendingImages.length > 0) {
+          setSavingText(`Uploading ${pendingImages.length} image(s)…`);
+          for (let i = 0; i < pendingImages.length; i++) {
+            await adminProductsApi.uploadImage(
+              editing.id,
+              pendingImages[i].file,
+              pendingImages[i].isPrimary && (editing.images?.length ?? 0) === 0
+            );
+          }
+          clearPending();
+        }
+
+        toast("Product updated successfully.");
+        setModal(null);
+        load();
+      } else {
+        const res = await adminProductsApi.create(payload as Parameters<typeof adminProductsApi.create>[0]);
+        if (!res.success || !res.data) {
+          toast(res.message ?? "Save failed.", false);
+          setSaving(false);
+          return;
+        }
+
+        const newProductId = (res.data as any).id;
+
+        // If images were selected during creation, upload them automatically!
+        if (pendingImages.length > 0 && newProductId) {
+          setSavingText(`Uploading ${pendingImages.length} image(s)…`);
+          for (let i = 0; i < pendingImages.length; i++) {
+            setSavingText(`Uploading image ${i + 1} of ${pendingImages.length}…`);
+            await adminProductsApi.uploadImage(
+              newProductId,
+              pendingImages[i].file,
+              pendingImages[i].isPrimary || i === 0
+            );
+          }
+          clearPending();
+        }
+
+        toast(pendingImages.length > 0 ? `Product created with ${pendingImages.length} image(s).` : "Product created.");
+        setModal(null);
+        load();
+      }
+    } catch (err: any) {
+      toast(err.message || "An error occurred while saving.", false);
+    } finally {
+      setSaving(false);
+      setSavingText("");
+    }
   }
 
   async function del(p: AdminProduct) {
@@ -104,6 +227,11 @@ function ProductsPage() {
     load();
   }
 
+  async function toggleFeatured(p: AdminProduct) {
+    await adminProductsApi.update(p.id, { is_featured: !p.is_featured });
+    load();
+  }
+
   async function uploadImages(files: FileList) {
     if (!editing) return;
     for (let i = 0; i < files.length; i++) {
@@ -112,6 +240,7 @@ function ProductsPage() {
     const res = await adminProductsApi.get(editing.id);
     if (res.success && res.data) setEditing(res.data);
     toast("Images uploaded.");
+    load();
   }
 
   async function delImage(imageId: number) {
@@ -120,6 +249,7 @@ function ProductsPage() {
     const res = await adminProductsApi.get(editing.id);
     if (res.success && res.data) setEditing(res.data);
     toast("Image deleted.");
+    load();
   }
 
   async function setPrimary(imageId: number) {
@@ -128,6 +258,7 @@ function ProductsPage() {
     const res = await adminProductsApi.get(editing.id);
     if (res.success && res.data) setEditing(res.data);
     toast("Primary image set.");
+    load();
   }
 
   const field = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -221,7 +352,15 @@ function ProductsPage() {
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {p.is_featured ? <Star className="size-4 text-[#b89a4e] fill-[#b89a4e] mx-auto" /> : <span className="text-gray-300">—</span>}
+                    <button
+                      onClick={() => toggleFeatured(p)}
+                      title={p.is_featured ? "Remove from featured" : "Mark as featured"}
+                      className="mx-auto flex items-center justify-center rounded-full p-1 transition-colors hover:bg-amber-50"
+                    >
+                      {p.is_featured
+                        ? <Star className="size-4 text-[#b89a4e] fill-[#b89a4e]" />
+                        : <Star className="size-4 text-gray-300 hover:text-[#b89a4e]" />}
+                    </button>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">

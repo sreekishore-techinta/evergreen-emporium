@@ -130,10 +130,10 @@ function SolutionsPage() {
                 {/* Content */}
                 <div className="p-7">
                   <SectionLabel index={item.index}>{item.challenge}</SectionLabel>
-                  <h2 className="mt-3 font-display text-2xl font-medium text-forest-deep">
+                  <h2 className="mt-3 font-display text-2xl font-bold text-forest-deep">
                     {item.challenge}
                   </h2>
-                  <p className="mt-3 text-sm leading-relaxed text-ink/60">{item.summary}</p>
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-ink">{item.summary}</p>
 
                   {/* Product chips */}
                   <div className="mt-5 flex flex-wrap gap-2">
@@ -142,7 +142,7 @@ function SolutionsPage() {
                         key={p.id}
                         to="/product/$id"
                         params={{ id: p.id }}
-                        className="flex items-center gap-1.5 border border-forest/20 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-forest transition-all hover:bg-forest hover:text-ivory"
+                        className="flex items-center gap-1.5 border-2 border-forest px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-forest transition-all duration-200 hover:bg-forest hover:text-ivory hover:shadow-md"
                       >
                         {p.name}
                         <ArrowRight className="size-2.5" />

@@ -65,7 +65,7 @@
   --parchment: oklch(0.942 0.032 88.0);
   --forest: oklch(0.32 0.095 157.2);
   --forest-deep: oklch(0.23 0.07 157.2);
-  --ink: oklch(0.27 0.025 82.5);
+  --ink: oklch(0.18 0.025 82.5);      /* darker — was 0.27, now much deeper */
   --gold: oklch(0.64 0.09 77.6);
   --gold-light: oklch(0.82 0.07 80.0);
   --background: var(--ivory);
@@ -150,6 +150,9 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    font-weight: 500;               /* was default 400 — now medium weight globally */
+    font-size: 1rem;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -161,12 +164,31 @@
     letter-spacing: -0.02em;
   }
 
-  /* Labels that use font-mono — now bold Jakarta Sans */
+  /* Labels that use font-mono — bold Jakarta Sans */
   .font-mono {
     font-family: "Plus Jakarta Sans", system-ui, sans-serif;
     font-weight: 700;
     letter-spacing: 0.08em;
   }
+
+  /* ── Global text visibility fixes ─────────────────────────────
+     All faint opacity text (text-ink/60, /55, /50, /45, /40) is
+     boosted so nothing disappears on real displays.
+  ────────────────────────────────────────────────────────────── */
+
+  /* Body / paragraph text — minimum contrast */
+  p, li, span, blockquote, td, th, label {
+    font-weight: 500;
+  }
+
+  /* Small mono labels — force readable weight */
+  .font-mono {
+    font-weight: 700 !important;
+  }
+
+  /* Prose text — ensure base sizes are visible */
+  .text-sm  { font-size: 0.9rem !important; }
+  .text-xs  { font-size: 0.8rem !important; }
 
   ::selection {
     background: var(--color-gold);
@@ -341,4 +363,362 @@
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL TEXT VISIBILITY BOOST
+   All faint text across the entire site is made clearly readable.
+   Low-opacity utility classes are overridden here so every page
+   benefits without touching individual components.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Paragraph / body copy boost ──────────────────────────────── */
+/* text-ink/60  →  was barely visible, now full contrast */
+[class*="text-ink\/60"],
+[class*="text-ink/60"]  { color: oklch(0.28 0.04 82.5) !important; font-weight: 500; }
+
+[class*="text-ink\/55"],
+[class*="text-ink/55"]  { color: oklch(0.30 0.04 82.5) !important; font-weight: 500; }
+
+[class*="text-ink\/50"],
+[class*="text-ink/50"]  { color: oklch(0.32 0.04 82.5) !important; font-weight: 500; }
+
+[class*="text-ink\/45"],
+[class*="text-ink/45"]  { color: oklch(0.33 0.04 82.5) !important; font-weight: 500; }
+
+[class*="text-ink\/40"],
+[class*="text-ink/40"]  { color: oklch(0.35 0.04 82.5) !important; font-weight: 500; }
+
+[class*="text-ink\/35"],
+[class*="text-ink/35"]  { color: oklch(0.38 0.04 82.5) !important; font-weight: 500; }
+
+[class*="text-ink\/30"],
+[class*="text-ink/30"]  { color: oklch(0.40 0.04 82.5) !important; font-weight: 600; }
+
+[class*="text-ink\/25"],
+[class*="text-ink/25"]  { color: oklch(0.42 0.04 82.5) !important; font-weight: 600; }
+
+/* ── Ivory text on dark backgrounds ───────────────────────────── */
+[class*="text-ivory\/80"],
+[class*="text-ivory/80"]  { color: oklch(0.95 0.02 89.9) !important; font-weight: 500; }
+
+[class*="text-ivory\/70"],
+[class*="text-ivory/70"]  { color: oklch(0.93 0.02 89.9) !important; font-weight: 500; }
+
+[class*="text-ivory\/60"],
+[class*="text-ivory/60"]  { color: oklch(0.91 0.02 89.9) !important; font-weight: 500; }
+
+[class*="text-ivory\/55"],
+[class*="text-ivory/55"]  { color: oklch(0.90 0.02 89.9) !important; font-weight: 500; }
+
+[class*="text-ivory\/50"],
+[class*="text-ivory/50"]  { color: oklch(0.89 0.02 89.9) !important; font-weight: 500; }
+
+/* The very faint footer/label ivory text — make it visible */
+[class*="text-ivory\/40"],
+[class*="text-ivory/40"]  { color: oklch(0.86 0.02 89.9) !important; font-weight: 600; }
+
+[class*="text-ivory\/30"],
+[class*="text-ivory/30"]  { color: oklch(0.84 0.02 89.9) !important; font-weight: 600; }
+
+[class*="text-ivory\/25"],
+[class*="text-ivory/25"]  { color: oklch(0.82 0.02 89.9) !important; font-weight: 600; }
+
+/* ── Black opacity text (used in some modals/badges) ──────────── */
+[class*="text-black\/40"],
+[class*="text-black/40"]  { color: oklch(0.38 0.02 82.5) !important; font-weight: 600; }
+
+[class*="text-black\/50"],
+[class*="text-black/50"]  { color: oklch(0.32 0.02 82.5) !important; font-weight: 600; }
+
+[class*="text-black\/30"],
+[class*="text-black/30"]  { color: oklch(0.42 0.02 82.5) !important; font-weight: 600; }
+
+/* ── Forest opacity text ──────────────────────────────────────── */
+[class*="text-forest\/70"],
+[class*="text-forest/70"]  { color: oklch(0.32 0.095 157.2) !important; font-weight: 600; }
+
+[class*="text-forest\/60"],
+[class*="text-forest/60"]  { color: oklch(0.32 0.095 157.2) !important; font-weight: 600; }
+
+/* ── Minimum font sizes — nothing below 11px ─────────────────── */
+[class*="text-\[8px\]"],
+[class*="text-\[9px\]"]  {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em;
+}
+
+[class*="text-\[10px\]"] {
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+}
+
+/* ── Section label / eyebrow text ────────────────────────────── */
+/* The (01) — Label style mono labels */
+.font-mono[class*="text-forest"],
+.font-mono[class*="text-gold"] {
+  font-weight: 800 !important;
+}
+
+/* ── Card body paragraphs on light backgrounds ───────────────── */
+:is(.p-7, .p-6, .p-5):not([class*="bg-forest"]):not([class*="bg-forest-deep"]):not([class*="bg-green"]):not([class*="bg-emerald"]):not([class*="bg-black"]) > p,
+:is(.p-7, .p-6, .p-5):not([class*="bg-forest"]):not([class*="bg-forest-deep"]):not([class*="bg-green"]):not([class*="bg-emerald"]):not([class*="bg-black"]) p:not([class*="text-white"]):not([class*="text-ivory"]):not([class*="text-gold"]) {
+  font-weight: 500;
+  color: oklch(0.28 0.04 82.5);
+}
+
+/* ── Headings — base styles ─────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  color: oklch(0.23 0.07 157.2); /* forest-deep default on light backgrounds */
+}
+
+/* Explicit text color utilities override default heading color */
+h1.text-white, h2.text-white, h3.text-white,
+h4.text-white, h5.text-white, h6.text-white,
+[class*="text-white"] {
+  color: #ffffff !important;
+}
+
+h1.text-ivory, h2.text-ivory, h3.text-ivory,
+h4.text-ivory, h5.text-ivory, h6.text-ivory,
+[class*="text-ivory"] {
+  color: #ffffff !important;
+}
+
+h1.text-gold, h2.text-gold, h3.text-gold,
+h4.text-gold, h5.text-gold, h6.text-gold,
+[class*="text-gold"] {
+  color: var(--color-gold) !important;
+}
+
+h1.font-display,
+h2.font-display,
+h3.font-display {
+  font-weight: 800;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GREEN THEME CARDS & SECTIONS — CRISP WHITE TEXT ENFORCEMENT
+   Ensures all green cards, banners, and sections use high-contrast
+   crisp white text across the entire site.
+═══════════════════════════════════════════════════════════════ */
+
+/* Target any container with green background */
+[class*="bg-forest"],
+[class*="bg-forest-deep"],
+[class*="bg-[#1e2d1a]"],
+[class*="bg-[#1a2d1e]"],
+[class*="bg-[#1C2B1E]"],
+[style*="oklch(0.16 0.06 157.2)"],
+[style*="oklch(0.23 0.07 157.2)"],
+header.bg-forest,
+footer.bg-forest-deep {
+  color: #ffffff;
+}
+
+/* All headings inside green cards/sections must be pure white */
+[class*="bg-forest"] :is(h1, h2, h3, h4, h5, h6),
+[class*="bg-forest-deep"] :is(h1, h2, h3, h4, h5, h6),
+[class*="bg-[#1e2d1a]"] :is(h1, h2, h3, h4, h5, h6),
+[class*="bg-[#1a2d1e]"] :is(h1, h2, h3, h4, h5, h6),
+[class*="bg-[#1C2B1E]"] :is(h1, h2, h3, h4, h5, h6),
+[style*="oklch(0.16 0.06 157.2)"] :is(h1, h2, h3, h4, h5, h6),
+[style*="oklch(0.23 0.07 157.2)"] :is(h1, h2, h3, h4, h5, h6),
+header.bg-forest :is(h1, h2, h3, h4, h5, h6),
+footer.bg-forest-deep :is(h1, h2, h3, h4, h5, h6) {
+  color: #ffffff !important;
+}
+
+/* Paragraphs and body text inside green cards/sections */
+[class*="bg-forest"] p:not([class*="text-gold"]):not([class*="text-forest-deep"]),
+[class*="bg-forest-deep"] p:not([class*="text-gold"]):not([class*="text-forest-deep"]),
+[class*="bg-[#1e2d1a]"] p:not([class*="text-gold"]):not([class*="text-forest-deep"]),
+[class*="bg-[#1a2d1e]"] p:not([class*="text-gold"]):not([class*="text-forest-deep"]),
+[class*="bg-[#1C2B1E]"] p:not([class*="text-gold"]):not([class*="text-forest-deep"]),
+[style*="oklch(0.16 0.06 157.2)"] p:not([class*="text-gold"]):not([class*="text-forest-deep"]),
+[style*="oklch(0.23 0.07 157.2)"] p:not([class*="text-gold"]):not([class*="text-forest-deep"]),
+header.bg-forest p,
+footer.bg-forest-deep p {
+  color: #ffffff;
+}
+
+/* Subtle secondary / muted text inside green cards - readable high-contrast white */
+[class*="bg-forest"] [class*="text-ivory/"],
+[class*="bg-forest-deep"] [class*="text-ivory/"],
+[class*="bg-forest"] [class*="text-white/"],
+[class*="bg-forest-deep"] [class*="text-white/"],
+[style*="oklch(0.16 0.06 157.2)"] [class*="text-ivory/"],
+[style*="oklch(0.16 0.06 157.2)"] [class*="text-white/"] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Preserve gold highlights & accents */
+[class*="bg-forest"] .text-gold,
+[class*="bg-forest-deep"] .text-gold,
+[class*="bg-forest"] [class*="text-gold"],
+[class*="bg-forest-deep"] [class*="text-gold"],
+[style*="oklch(0.16 0.06 157.2)"] [class*="text-gold"],
+[style*="oklch(0.16 0.06 157.2)"] .text-gold {
+  color: var(--color-gold) !important;
+}
+
+/* Ensure buttons on green cards/sections with gold background keep dark readable text */
+[class*="bg-forest"] .bg-gold,
+[class*="bg-forest-deep"] .bg-gold,
+[class*="bg-forest"] [class*="bg-gold"],
+[class*="bg-forest-deep"] [class*="bg-gold"],
+[style*="oklch(0.16 0.06 157.2)"] .bg-gold,
+[style*="oklch(0.16 0.06 157.2)"] [class*="bg-gold"] {
+  color: var(--color-forest-deep) !important;
+}
+[class*="bg-forest"] .bg-gold *,
+[class*="bg-forest-deep"] .bg-gold *,
+[style*="oklch(0.16 0.06 157.2)"] .bg-gold * {
+  color: var(--color-forest-deep) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM BUTTON SYSTEM — Visible & Polished
+   Fixes near-invisible outline buttons by ensuring solid borders,
+   readable text, and premium hover transitions.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Outline / ghost buttons with faint forest border ──────────
+   Any border-forest with opacity modifier (e.g. border-forest/20)
+   gets boosted to a clearly-visible stroke.
+─────────────────────────────────────────────────────────────── */
+
+/* Boost faint forest borders on all interactive elements */
+a[class*="border-forest"],
+button[class*="border-forest"],
+[class*="border-forest"][class*="px-"] {
+  border-color: oklch(0.32 0.095 157.2 / 70%) !important;
+  color: oklch(0.32 0.095 157.2) !important;
+}
+
+/* On hover — full vivid border + forest fill + crisp white text */
+a[class*="border-forest"]:hover,
+button[class*="border-forest"]:hover,
+[class*="border-forest"][class*="px-"]:hover {
+  border-color: oklch(0.32 0.095 157.2) !important;
+  background-color: oklch(0.32 0.095 157.2) !important;
+  color: oklch(0.97 0.01 89.9) !important;
+  box-shadow: 0 8px 24px -4px oklch(0.32 0.095 157.2 / 35%),
+              0 2px 8px -2px oklch(0.32 0.095 157.2 / 20%);
+}
+
+/* Icons & SVGs inside buttons inherit hover colour */
+a[class*="border-forest"]:hover svg,
+button[class*="border-forest"]:hover svg,
+[class*="border-forest"][class*="px-"]:hover svg {
+  color: oklch(0.97 0.01 89.9) !important;
+  stroke: oklch(0.97 0.01 89.9) !important;
+}
+
+/* ── Gold-bordered ghost buttons ───────────────────────────── */
+a[class*="border-gold"][class*="px-"],
+button[class*="border-gold"][class*="px-"] {
+  border-color: oklch(0.64 0.09 77.6 / 70%) !important;
+  color: oklch(0.32 0.07 157.2) !important;
+}
+
+a[class*="border-gold"][class*="px-"]:hover,
+button[class*="border-gold"][class*="px-"]:hover {
+  border-color: oklch(0.64 0.09 77.6) !important;
+  background-color: oklch(0.64 0.09 77.6) !important;
+  color: oklch(0.23 0.07 157.2) !important;
+  box-shadow: 0 8px 24px -4px oklch(0.64 0.09 77.6 / 40%);
+}
+
+/* ── Ink-bordered ghost buttons (dark outline style) ────────── */
+a[class*="border-ink"][class*="px-"],
+button[class*="border-ink"][class*="px-"] {
+  border-color: oklch(0.18 0.025 82.5 / 55%) !important;
+  color: oklch(0.18 0.025 82.5) !important;
+}
+
+a[class*="border-ink"][class*="px-"]:hover,
+button[class*="border-ink"][class*="px-"]:hover {
+  border-color: oklch(0.18 0.025 82.5) !important;
+  background-color: oklch(0.18 0.025 82.5) !important;
+  color: oklch(0.97 0.01 89.9) !important;
+  box-shadow: 0 8px 24px -4px oklch(0.18 0.025 82.5 / 30%);
+}
+
+/* ── Ivory/white bordered ghost buttons (on dark bg) ────────── */
+a[class*="border-ivory"][class*="px-"],
+button[class*="border-ivory"][class*="px-"] {
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+a[class*="border-ivory"][class*="px-"]:hover,
+button[class*="border-ivory"][class*="px-"]:hover {
+  border-color: rgba(255, 255, 255, 0.85) !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 24px -4px rgba(255, 255, 255, 0.15);
+}
+
+/* ── Solid fill buttons — premium hover lift effect ─────────── */
+a[class*="bg-forest"][class*="px-"],
+button[class*="bg-forest"][class*="px-"] {
+  background-color: oklch(0.32 0.095 157.2) !important;
+  color: oklch(0.97 0.01 89.9) !important;
+  box-shadow: 0 2px 8px -2px oklch(0.32 0.095 157.2 / 25%);
+}
+
+a[class*="bg-forest"][class*="px-"]:hover,
+button[class*="bg-forest"][class*="px-"]:hover {
+  background-color: oklch(0.28 0.095 157.2) !important;
+  box-shadow: 0 12px 28px -4px oklch(0.32 0.095 157.2 / 40%),
+              0 4px 12px -2px oklch(0.32 0.095 157.2 / 25%);
+  transform: translateY(-2px);
+}
+
+/* ── Gold filled buttons ────────────────────────────────────── */
+a[class*="bg-gold"][class*="px-"],
+button[class*="bg-gold"][class*="px-"] {
+  background-color: oklch(0.64 0.09 77.6) !important;
+  color: oklch(0.23 0.07 157.2) !important;
+  box-shadow: 0 2px 8px -2px oklch(0.64 0.09 77.6 / 30%);
+}
+
+a[class*="bg-gold"][class*="px-"]:hover,
+button[class*="bg-gold"][class*="px-"]:hover {
+  background-color: oklch(0.70 0.09 77.6) !important;
+  color: oklch(0.23 0.07 157.2) !important;
+  box-shadow: 0 12px 28px -4px oklch(0.64 0.09 77.6 / 45%),
+              0 4px 12px -2px oklch(0.64 0.09 77.6 / 25%);
+  transform: translateY(-2px);
+}
+
+/* ── hover:text-ivory override — ensure it always works ────────
+   The aggressive [class*="text-ivory"] rule was blocking hover
+   text transitions. This re-enables them properly.
+─────────────────────────────────────────────────────────────── */
+
+/* Transition-capable elements using hover:text-ivory */
+[class*="hover:text-ivory"]:hover {
+  color: oklch(0.97 0.01 89.9) !important;
+}
+
+/* hover:text-ivory when bg changes to forest on hover */
+[class*="hover:bg-forest"]:hover {
+  background-color: oklch(0.32 0.095 157.2) !important;
+}
+[class*="hover:bg-forest"]:hover * {
+  color: oklch(0.97 0.01 89.9) !important;
+}
+
+/* Global transition smoothing for all buttons */
+a[class*="px-"][class*="py-"],
+button[class*="px-"][class*="py-"] {
+  transition: color 0.25s ease,
+              background-color 0.25s ease,
+              border-color 0.25s ease,
+              box-shadow 0.25s ease,
+              transform 0.2s ease !important;
 }

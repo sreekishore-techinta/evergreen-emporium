@@ -127,7 +127,8 @@ class ProductController {
 
         try {
             $path      = Upload::image($_FILES['image'], 'products');
-            $isPrimary = !empty($_POST['is_primary']);
+            $existing  = $this->products->getImages($productId);
+            $isPrimary = !empty($_POST['is_primary']) || empty($existing);
             $sort      = (int)($_POST['sort_order'] ?? 0);
             $imgId     = $this->products->addImage($productId, $path, $isPrimary, $sort);
             Response::created([
