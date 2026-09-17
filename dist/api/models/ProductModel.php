@@ -210,6 +210,85 @@ class ProductModel extends BaseModel {
         return $stmt->rowCount() > 0;
     }
 
+    /**
+     * Adjust stock by a signed delta, record in stock_movements, and return the
+     * new stock level. Returns null if the product doesn't exist.
+     * A negative delta that would push stock below 0 is clamped to 0.
+     */
+    public function adjustStock(
+        int     $id,
+        int     $delta,
+        string  $reason   = 'manual_adjustment',
+        ?int    $orderId  = null,
+        ?string $notes    = null,
+        ?int    $adminId  = null
+    ): ?int {
+        $this->db->beginTransaction();
+        try {
+            // Lock the row
+            $stmt = $this->db->prepare("SELECT stock FROM products WHERE id=? FOR UPDATE");
+            $stmt->execute([$id]);
+            $row = $stmt->fetch();
+            if (!$row) { $this->db->rollBack(); return null; }
+
+            $newStock = max(0, (int)$row['stock'] + $delta);
+            $this->db->prepare("UPDATE products SET stock=? WHERE id=?")
+                     ->execute([$newStock, $id]);
+
+            $this->logStockMovement($id, $delta, $newStock, $reason, $orderId, $notes, $adminId);
+
+            $this->db->commit();
+            return $newStock;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Write one row to stock_movements.
+     * Silently swallows errors if the table doesn't exist yet (pre-migration).
+     */
+    public function logStockMovement(
+        int     $productId,
+        int     $delta,
+        int     $stockAfter,
+        string  $reason      = 'manual_adjustment',
+        ?int    $referenceId = null,
+        ?string $notes       = null,
+        ?int    $adminId     = null
+    ): void {
+        try {
+            $this->db->prepare(
+                "INSERT INTO stock_movements
+                   (product_id, delta, stock_after, reason, reference_id, notes, admin_id)
+                 VALUES (?,?,?,?,?,?,?)"
+            )->execute([$productId, $delta, $stockAfter, $reason, $referenceId, $notes, $adminId]);
+        } catch (Throwable) {
+            // Pre-migration: table missing — non-fatal
+        }
+    }
+
+    /**
+     * Fetch recent stock movements for a product (newest first).
+     */
+    public function getStockMovements(int $productId, int $limit = 30): array {
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT sm.*, a.name AS admin_name
+                 FROM stock_movements sm
+                 LEFT JOIN admins a ON a.id = sm.admin_id
+                 WHERE sm.product_id = ?
+                 ORDER BY sm.created_at DESC
+                 LIMIT ?"
+            );
+            $stmt->execute([$productId, $limit]);
+            return $stmt->fetchAll();
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
     public function delete(int $id): bool {
         $stmt = $this->db->prepare("DELETE FROM products WHERE id=?");
         return $stmt->execute([$id]);

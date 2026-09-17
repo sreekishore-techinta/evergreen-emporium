@@ -98,6 +98,8 @@ $r->delete('/api/admin/products/{id}',                      [$prods, 'destroy'])
 $r->post  ('/api/admin/products/{id}/images',               [$prods, 'uploadImage']);
 $r->delete('/api/admin/products/{id}/images/{imageId}',     [$prods, 'deleteImage']);
 $r->patch ('/api/admin/products/{id}/images/{imageId}/primary', [$prods, 'setPrimaryImage']);
+$r->patch ('/api/admin/products/{id}/stock',                [$prods, 'adjustStock']);
+$r->get   ('/api/admin/products/{id}/stock/history',        [$prods, 'stockHistory']);
 
 // ── Cart ──────────────────────────────────────────────────────────
 $cart = new CartController();
@@ -125,6 +127,7 @@ $r->get  ('/api/admin/orders',                     [$ord, 'adminIndex']);
 $r->get  ('/api/admin/orders/{id}',                [$ord, 'adminShow']);
 $r->patch('/api/admin/orders/{id}/status',         [$ord, 'updateStatus']);
 $r->patch('/api/admin/orders/{id}/payment-status', [$ord, 'updatePayment']);
+$r->post ('/api/admin/orders/{id}/cancel',         [$ord, 'cancel']);
 
 // ── Coupons ───────────────────────────────────────────────────────
 $coup = new CouponController();

@@ -9,9 +9,9 @@ function setCorsHeaders(): void {
     // Add http/https variants of every allowed origin
     $variants = [];
     foreach ($allowed as $o) {
-        if (str_starts_with($o, 'https://')) {
+        if (strncmp($o, 'https://', 8) === 0) {
             $variants[] = 'http://' . substr($o, 8);
-        } elseif (str_starts_with($o, 'http://')) {
+        } elseif (strncmp($o, 'http://', 7) === 0) {
             $variants[] = 'https://' . substr($o, 7);
         }
     }

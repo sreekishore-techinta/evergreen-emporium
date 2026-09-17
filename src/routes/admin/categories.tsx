@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { adminCategoriesApi, type AdminCategory } from "@/lib/adminApi";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/categories")({
   head: () => ({ meta: [{ title: "Categories — Evergreen Admin" }] }),
@@ -16,6 +20,13 @@ function CategoriesPage() {
   const [form, setForm]      = useState({ name:"", description:"", sort_order:0, is_active:true });
   const [saving, setSaving]  = useState(false);
   const [toast, setToast]    = useState({ msg:"", ok:true });
+
+  // ── Confirm dialog state ───────────────────────────────────────
+  type ConfirmState = { open: boolean; title: string; description: string; onConfirm: () => void };
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ open: false, title: "", description: "", onConfirm: () => {} });
+  function askConfirm(title: string, description: string, onConfirm: () => void) {
+    setConfirmState({ open: true, title, description, onConfirm });
+  }
 
   function showToast(msg:string, ok=true) { setToast({msg,ok}); setTimeout(()=>setToast({msg:"",ok:true}),3000); }
 
@@ -40,10 +51,15 @@ function CategoriesPage() {
   }
 
   async function del(c:AdminCategory) {
-    if (!confirm(`Delete "${c.name}"? All products in this category must be moved first.`)) return;
-    const res = await adminCategoriesApi.delete(c.id);
-    if (res.success) { showToast("Deleted."); load(); }
-    else showToast(res.message??"Delete failed.",false);
+    askConfirm(
+      "Delete Category",
+      `Delete "${c.name}"? All products in this category must be moved first.`,
+      async () => {
+        const res = await adminCategoriesApi.delete(c.id);
+        if (res.success) { showToast("Deleted."); load(); }
+        else showToast(res.message ?? "Delete failed.", false);
+      }
+    );
   }
 
   async function toggle(c:AdminCategory) {
@@ -143,6 +159,24 @@ function CategoriesPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={confirmState.open} onOpenChange={open => setConfirmState(s => ({ ...s, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmState.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmState.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => { confirmState.onConfirm(); setConfirmState(s => ({ ...s, open: false })); }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

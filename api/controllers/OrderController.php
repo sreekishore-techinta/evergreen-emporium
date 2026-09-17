@@ -172,14 +172,44 @@ class OrderController {
     }
 
     public function updateStatus(int $id): void {
-        AuthMiddleware::requireAdmin();
-        $data = AuthMiddleware::getRequestBody();
+        $payload = AuthMiddleware::requireAdmin();
+        $data    = AuthMiddleware::getRequestBody();
         if (empty($data['status'])) Response::error('Status is required.', 422);
 
-        $ok = $this->orders->updateStatus($id, $data['status']);
-        if (!$ok) Response::error('Invalid status value.', 400);
+        $ok = $this->orders->updateStatus($id, $data['status'], (int)$payload['admin_id']);
+        if (!$ok) Response::error('Invalid status value or order not found.', 400);
 
         Response::success($this->orders->find($id), 'Order status updated.');
+    }
+
+    /**
+     * POST /api/admin/orders/{id}/cancel
+     * Cancels an order and restores stock for all line items.
+     * Idempotent — cancelling an already-cancelled order is a no-op.
+     */
+    public function cancel(int $id): void {
+        $payload = AuthMiddleware::requireAdmin();
+
+        $order = $this->orders->find($id);
+        if (!$order) Response::notFound('Order not found.');
+
+        if ($order['status'] === 'cancelled') {
+            Response::success($order, 'Order is already cancelled.');
+        }
+
+        // Statuses from which cancellation is allowed
+        $cancellable = ['pending', 'confirmed', 'processing'];
+        if (!in_array($order['status'], $cancellable, true)) {
+            Response::error(
+                "Cannot cancel a '{$order['status']}' order. Only pending, confirmed or processing orders can be cancelled.",
+                400
+            );
+        }
+
+        $ok = $this->orders->updateStatus($id, 'cancelled', (int)$payload['admin_id']);
+        if (!$ok) Response::error('Failed to cancel order.', 500);
+
+        Response::success($this->orders->find($id), 'Order cancelled and stock restored.');
     }
 
     public function updatePayment(int $id): void {

@@ -2,8 +2,6 @@ Options -Indexes
 RewriteEngine On
 
 # ── Explicit MIME types ───────────────────────────────────────────
-# Force correct MIME types so browsers never get text/html for assets.
-# This is the safety net even if the server's mime.types is misconfigured.
 <IfModule mod_mime.c>
     AddType application/javascript          .js .mjs
     AddType text/css                        .css
@@ -42,14 +40,17 @@ RewriteEngine On
     ExpiresByType font/woff                 "access plus 1 year"
 </IfModule>
 
-# ── Allow direct access to real files and directories ─────────────
-# Assets, images, pre-rendered HTML pages are all real files — serve directly.
+# ── PHP API — pass through to api/ directory, handled by api/.htaccess ───
+# Never intercept /api/* with the SPA fallback.
+RewriteRule ^api(/.*)?$ api/$1 [L]
+
+# ── Serve real files and directories directly ─────────────────────
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# ── SPA fallback ─────────────────────────────────────────────────
-# Any URL that is NOT a real file → serve index.html (React router handles it)
+# ── SPA fallback ──────────────────────────────────────────────────
+# All other URLs → index.html so React Router handles client-side routing.
 RewriteRule ^ index.html [L]

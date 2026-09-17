@@ -1,0 +1,12 @@
+Options -Indexes
+RewriteEngine On
+
+# Serve real files directly (assets, images, etc.)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# All admin sub-routes → the React admin index.html (SPA routing)
+RewriteRule ^ /admin/index.html [L]

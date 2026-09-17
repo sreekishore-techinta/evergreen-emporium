@@ -48,7 +48,7 @@ class Upload {
 
     public static function url(string $path): string {
         if (empty($path)) return '';
-        if (str_starts_with($path, 'http')) return $path;
+        if (strncmp($path, 'http', 4) === 0) return $path;
         return API_URL . '/' . ltrim($path, '/');
     }
 }

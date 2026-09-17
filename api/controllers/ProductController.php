@@ -155,4 +155,56 @@ class ProductController {
         if (!$ok) Response::notFound('Image not found.');
         Response::success(null, 'Primary image set.');
     }
+
+    // ── Stock management ──────────────────────────────────────────
+
+    /**
+     * PATCH /api/admin/products/{id}/stock
+     * Body: { "delta": <int>, "notes": <string optional> }
+     * delta > 0 = stock in (restock), delta < 0 = stock out (correction)
+     */
+    public function adjustStock(int $id): void {
+        $payload = AuthMiddleware::requireAdmin();
+        $p = $this->products->find($id);
+        if (!$p) Response::notFound('Product not found.');
+
+        $data  = AuthMiddleware::getRequestBody();
+        $delta = isset($data['delta']) ? (int)$data['delta'] : null;
+        if ($delta === null || $delta === 0) Response::error('delta must be a non-zero integer.', 422);
+
+        $notes = isset($data['notes']) ? trim((string)$data['notes']) : null;
+        if (!$notes) {
+            $notes = $delta > 0
+                ? "Manual stock-in (+{$delta}) by admin"
+                : "Manual stock correction ({$delta}) by admin";
+        }
+
+        $newStock = $this->products->adjustStock(
+            $id,
+            $delta,
+            'manual_adjustment',
+            null,
+            $notes,
+            (int)$payload['admin_id']
+        );
+
+        Response::success([
+            'product_id' => $id,
+            'delta'      => $delta,
+            'stock'      => $newStock,
+        ], $delta > 0 ? "Stock increased by {$delta}." : "Stock reduced by " . abs($delta) . ".");
+    }
+
+    /**
+     * GET /api/admin/products/{id}/stock/history
+     * Returns recent stock_movements for a product.
+     */
+    public function stockHistory(int $id): void {
+        AuthMiddleware::requireAdmin();
+        if (!$this->products->find($id)) Response::notFound('Product not found.');
+
+        $limit = min((int)($_GET['limit'] ?? 30), 100);
+        $rows  = $this->products->getStockMovements($id, $limit);
+        Response::success($rows);
+    }
 }

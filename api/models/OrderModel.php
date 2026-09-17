@@ -36,6 +36,18 @@ class OrderModel extends BaseModel {
                 $this->db->prepare("UPDATE products SET stock=stock-? WHERE id=?")
                          ->execute([$item['quantity'], $p['id']]);
 
+                // Log stock movement — order_placed
+                $stockAfter = (int)$p['stock'] - $item['quantity'];
+                $this->logStockMovement(
+                    (int)$p['id'],
+                    -(int)$item['quantity'],
+                    $stockAfter,
+                    'order_placed',
+                    null,    // orderId not known yet — updated after insert below
+                    "New order",
+                    null
+                );
+                // Stash index for post-insert reference_id update
                 $itemsToInsert[] = [
                     'product_id'    => $p['id'],
                     'product_name'  => $p['name'],
@@ -78,6 +90,18 @@ class OrderModel extends BaseModel {
             ]);
 
             $orderId = (int)$this->db->lastInsertId();
+
+            // Back-fill reference_id on the stock_movements we just logged
+            try {
+                $this->db->prepare(
+                    "UPDATE stock_movements
+                     SET reference_id=?, notes=CONCAT('Order #', ?)
+                     WHERE reference_id IS NULL AND reason='order_placed'
+                       AND created_at >= DATE_SUB(NOW(), INTERVAL 5 SECOND)"
+                )->execute([$orderId, $orderId]);
+            } catch (Throwable $e) {
+                // Pre-migration: stock_movements table missing — non-fatal
+            }
 
             foreach ($itemsToInsert as $item) {
                 $this->db->prepare(
@@ -189,11 +213,104 @@ class OrderModel extends BaseModel {
         return $this->paginate($sql, $params, $page, $ps);
     }
 
-    public function updateStatus(int $id, string $status): bool {
+    public function updateStatus(int $id, string $status, ?int $adminId = null): bool {
         $allowed = ['pending','confirmed','processing','shipped','delivered','cancelled'];
         if (!in_array($status, $allowed, true)) return false;
-        return $this->db->prepare("UPDATE orders SET status=? WHERE id=?")
-                        ->execute([$status, $id]);
+
+        // Fetch current status before changing
+        $stmt = $this->db->prepare("SELECT status FROM orders WHERE id=?");
+        $stmt->execute([$id]);
+        $current = $stmt->fetchColumn();
+        if ($current === false) return false;
+
+        $this->db->prepare("UPDATE orders SET status=? WHERE id=?")->execute([$status, $id]);
+
+        // ── Stock restoration on cancellation ────────────────────────
+        // If transitioning TO cancelled from a non-cancelled state, restore stock
+        if ($status === 'cancelled' && $current !== 'cancelled') {
+            $items = $this->getItems($id);
+            foreach ($items as $item) {
+                if (!$item['product_id']) continue;
+
+                // Restore stock atomically and get new stock level
+                $this->db->prepare(
+                    "UPDATE products SET stock = stock + ? WHERE id=?"
+                )->execute([$item['quantity'], $item['product_id']]);
+
+                $stockAfter = (int)$this->db->prepare(
+                    "SELECT stock FROM products WHERE id=?"
+                )->execute([$item['product_id']]) ? (function($db, $pid) {
+                    $s = $db->prepare("SELECT stock FROM products WHERE id=?");
+                    $s->execute([$pid]);
+                    return (int)$s->fetchColumn();
+                })($this->db, $item['product_id']) : 0;
+
+                $this->logStockMovement(
+                    (int)$item['product_id'],
+                    (int)$item['quantity'],   // positive delta = stock back in
+                    $stockAfter,
+                    'order_cancelled',
+                    $id,
+                    "Cancelled order #{$id}",
+                    $adminId
+                );
+            }
+        }
+
+        // ── Stock deduction log on order confirmation ─────────────────
+        // Log the stock_out movement when order moves from pending → confirmed
+        // (stock was already decremented at checkout; this just writes the audit row
+        //  if it wasn't written yet — idempotent due to reference_id check)
+        if ($status === 'confirmed' && $current === 'pending') {
+            $items = $this->getItems($id);
+            foreach ($items as $item) {
+                if (!$item['product_id']) continue;
+                // Only log if no 'order_placed' row exists yet for this order+product
+                $exists = $this->db->prepare(
+                    "SELECT COUNT(*) FROM stock_movements
+                     WHERE product_id=? AND reference_id=? AND reason='order_placed'"
+                );
+                $exists->execute([$item['product_id'], $id]);
+                if ((int)$exists->fetchColumn() === 0) {
+                    $s = $this->db->prepare("SELECT stock FROM products WHERE id=?");
+                    $s->execute([$item['product_id']]);
+                    $stockNow = (int)$s->fetchColumn();
+                    $this->logStockMovement(
+                        (int)$item['product_id'],
+                        -(int)$item['quantity'],
+                        $stockNow,
+                        'order_placed',
+                        $id,
+                        "Order #{$id} confirmed",
+                        null
+                    );
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // ── Stock movement logger ──────────────────────────────────────
+
+    public function logStockMovement(
+        int $productId,
+        int $delta,
+        int $stockAfter,
+        string $reason,
+        ?int $referenceId = null,
+        ?string $notes    = null,
+        ?int $adminId     = null
+    ): void {
+        try {
+            $this->db->prepare(
+                "INSERT INTO stock_movements
+                   (product_id, delta, stock_after, reason, reference_id, notes, admin_id)
+                 VALUES (?,?,?,?,?,?,?)"
+            )->execute([$productId, $delta, $stockAfter, $reason, $referenceId, $notes, $adminId]);
+        } catch (Throwable $e) {
+            // Non-fatal — if the table doesn't exist yet (pre-migration), silently skip
+        }
     }
 
     public function updatePaymentStatus(int $id, string $status, string $txnId = ''): bool {
@@ -250,5 +367,24 @@ class OrderModel extends BaseModel {
         );
         $stmt->execute([$days]);
         return $stmt->fetchAll();
+    }
+
+    // ── Stock history for a product ────────────────────────────────
+
+    public function getStockMovements(int $productId, int $limit = 30): array {
+        try {
+            $stmt = $this->db->prepare(
+                "SELECT sm.*, a.name AS admin_name
+                 FROM stock_movements sm
+                 LEFT JOIN admins a ON a.id = sm.admin_id
+                 WHERE sm.product_id = ?
+                 ORDER BY sm.created_at DESC
+                 LIMIT ?"
+            );
+            $stmt->execute([$productId, $limit]);
+            return $stmt->fetchAll();
+        } catch (Throwable $e) {
+            return [];
+        }
     }
 }

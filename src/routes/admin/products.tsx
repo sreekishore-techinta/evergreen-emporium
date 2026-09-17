@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
-import { Plus, Search, Edit2, Trash2, ImagePlus, Star, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, X, Upload, Loader2 } from "lucide-react";
-import { adminProductsApi, adminCategoriesApi, type AdminProduct, type AdminCategory } from "@/lib/adminApi";
+import { Plus, Search, Edit2, Trash2, ImagePlus, Star, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight, X, Loader2, TrendingUp, TrendingDown, History } from "lucide-react";
+import { adminProductsApi, adminCategoriesApi, adminStockApi, type AdminProduct, type AdminCategory, type StockMovement } from "@/lib/adminApi";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/products")({
   head: () => ({ meta: [{ title: "Products — Evergreen Admin" }] }),
@@ -11,7 +15,7 @@ export const Route = createFileRoute("/admin/products")({
 const EMPTY: Partial<AdminProduct> & { benefits_text: string; apps_text: string } = {
   name: "", category_id: undefined, sku: "", type: "", badge: "Premium Quality",
   tagline: "", description: "", long_description: "", usage_info: "",
-  price: 0, discount_price: undefined, stock: 0, weight: "",
+  price: 0, discount_price: undefined, stock: 0, low_stock_alert: 5, weight: "",
   is_active: true, is_featured: false, is_bestseller: false,
   benefits_text: "", apps_text: "",
 };
@@ -44,6 +48,45 @@ function ProductsPage() {
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const imgRef = useRef<HTMLInputElement>(null);
   const modalFileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Stock adjust modal ─────────────────────────────────────────
+  const [stockModal, setStockModal] = useState<AdminProduct | null>(null);
+  const [stockDelta, setStockDelta] = useState(0);
+  const [stockNotes, setStockNotes] = useState("");
+  const [stockHistory, setStockHistory] = useState<StockMovement[]>([]);
+  const [stockSaving, setStockSaving] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  async function openStockModal(p: AdminProduct) {
+    setStockModal(p);
+    setStockDelta(0);
+    setStockNotes("");
+    setHistoryLoading(true);
+    const res = await adminStockApi.history(p.id, 20);
+    setStockHistory(res.success && res.data ? res.data : []);
+    setHistoryLoading(false);
+  }
+
+  async function submitStockAdjust() {
+    if (!stockModal || stockDelta === 0) return;
+    setStockSaving(true);
+    const res = await adminStockApi.adjust(stockModal.id, stockDelta, stockNotes || undefined);
+    setStockSaving(false);
+    if (res.success && res.data) {
+      toast(`Stock updated: now ${res.data.stock} units.`);
+      setStockModal(null);
+      load();
+    } else {
+      toast(res.message ?? "Adjust failed.", false);
+    }
+  }
+
+  // ── Confirm dialog state ───────────────────────────────────────
+  type ConfirmState = { open: boolean; title: string; description: string; onConfirm: () => void };
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ open: false, title: "", description: "", onConfirm: () => {} });
+  function askConfirm(title: string, description: string, onConfirm: () => void) {
+    setConfirmState({ open: true, title, description, onConfirm });
+  }
 
   function toast(msg: string, ok = true) {
     const id = ++tid;
@@ -216,10 +259,15 @@ function ProductsPage() {
   }
 
   async function del(p: AdminProduct) {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
-    const res = await adminProductsApi.delete(p.id);
-    if (res.success) { toast("Product deleted."); load(); }
-    else toast(res.message ?? "Delete failed.", false);
+    askConfirm(
+      "Delete Product",
+      `Delete "${p.name}"? This cannot be undone.`,
+      async () => {
+        const res = await adminProductsApi.delete(p.id);
+        if (res.success) { toast("Product deleted."); load(); }
+        else toast(res.message ?? "Delete failed.", false);
+      }
+    );
   }
 
   async function toggle(p: AdminProduct) {
@@ -244,12 +292,18 @@ function ProductsPage() {
   }
 
   async function delImage(imageId: number) {
-    if (!editing || !confirm("Delete this image?")) return;
-    await adminProductsApi.deleteImage(editing.id, imageId);
-    const res = await adminProductsApi.get(editing.id);
-    if (res.success && res.data) setEditing(res.data);
-    toast("Image deleted.");
-    load();
+    if (!editing) return;
+    askConfirm(
+      "Delete Image",
+      "Delete this image? This cannot be undone.",
+      async () => {
+        await adminProductsApi.deleteImage(editing.id, imageId);
+        const res = await adminProductsApi.get(editing.id);
+        if (res.success && res.data) setEditing(res.data);
+        toast("Image deleted.");
+        load();
+      }
+    );
   }
 
   async function setPrimary(imageId: number) {
@@ -425,11 +479,71 @@ function ProductsPage() {
                 <label className="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" checked={!!form.is_featured} onChange={check("is_featured")} className="accent-[#b89a4e]" /> Featured</label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm"><input type="checkbox" checked={!!form.is_bestseller} onChange={check("is_bestseller")} className="accent-[#1f5c3a]" /> Best Seller</label>
               </div>
+
+              {/* ── Image Upload ─────────────────────────────────── */}
+              <div>
+                <label className="lbl">Product Images</label>
+                {/* Drop zone */}
+                <div
+                  onClick={() => modalFileInputRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); handleFilesSelected(e.dataTransfer.files); }}
+                  className="mt-1 border-2 border-dashed border-gray-200 hover:border-[#1f5c3a] rounded-xl p-5 text-center cursor-pointer transition-colors"
+                >
+                  <ImagePlus className="size-7 text-gray-300 mx-auto mb-1.5" />
+                  <p className="text-sm text-gray-500">Click or drag & drop images here</p>
+                  <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP — max 5 MB each · first image becomes primary</p>
+                  <input
+                    ref={modalFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={e => { handleFilesSelected(e.target.files); e.target.value = ""; }}
+                  />
+                </div>
+
+                {/* Pending previews */}
+                {pendingImages.length > 0 && (
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    {pendingImages.map(img => (
+                      <div key={img.id} className="relative group">
+                        <img
+                          src={img.previewUrl}
+                          alt="preview"
+                          className={`w-full aspect-square object-cover rounded-lg border-2 transition-colors ${img.isPrimary ? "border-[#1f5c3a]" : "border-transparent"}`}
+                        />
+                        {img.isPrimary && (
+                          <span className="absolute top-1 left-1 bg-[#1f5c3a] text-white text-[9px] px-1.5 py-0.5 rounded font-semibold">PRIMARY</span>
+                        )}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity flex flex-col items-center justify-center gap-1">
+                          {!img.isPrimary && (
+                            <button
+                              type="button"
+                              onClick={() => setPendingPrimary(img.id)}
+                              className="text-[10px] bg-[#1f5c3a] text-white px-2 py-0.5 rounded"
+                            >
+                              Set Primary
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removePendingImage(img.id)}
+                            className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t">
               <button onClick={() => setModal(null)} className="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Cancel</button>
               <button onClick={save} disabled={saving} className="px-5 py-2 bg-[#1f5c3a] hover:bg-[#163f28] text-white rounded-lg text-sm font-medium disabled:opacity-60">
-                {saving ? "Saving…" : modal === "edit" ? "Update Product" : "Create Product"}
+              {saving ? savingText || "Saving…" : modal === "edit" ? "Update Product" : pendingImages.length > 0 ? `Create Product + ${pendingImages.length} Image${pendingImages.length > 1 ? "s" : ""}` : "Create Product"}
               </button>
             </div>
           </div>
@@ -483,6 +597,24 @@ function ProductsPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={confirmState.open} onOpenChange={open => setConfirmState(s => ({ ...s, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmState.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmState.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => { confirmState.onConfirm(); setConfirmState(s => ({ ...s, open: false })); }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <style>{`.lbl{display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.inp{width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;transition:border-color .15s}.inp:focus{border-color:#1f5c3a}`}</style>
     </div>

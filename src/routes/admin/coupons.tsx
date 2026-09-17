@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { adminCouponsApi, type AdminCoupon } from "@/lib/adminApi";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/coupons")({
   head: () => ({ meta: [{ title: "Coupons — Evergreen Admin" }] }),
@@ -18,6 +22,13 @@ function CouponsPage() {
   const [form, setForm]       = useState<Partial<AdminCoupon>>({...EMPTY});
   const [saving, setSaving]   = useState(false);
   const [toast, setToast]     = useState({msg:"",ok:true});
+
+  // ── Confirm dialog state ───────────────────────────────────────
+  type ConfirmState = { open: boolean; title: string; description: string; onConfirm: () => void };
+  const [confirmState, setConfirmState] = useState<ConfirmState>({ open: false, title: "", description: "", onConfirm: () => {} });
+  function askConfirm(title: string, description: string, onConfirm: () => void) {
+    setConfirmState({ open: true, title, description, onConfirm });
+  }
 
   function showToast(msg:string,ok=true){setToast({msg,ok});setTimeout(()=>setToast({msg:"",ok:true}),3000);}
 
@@ -43,9 +54,14 @@ function CouponsPage() {
   }
 
   async function del(c:AdminCoupon){
-    if(!confirm(`Delete coupon "${c.code}"?`))return;
-    const res=await adminCouponsApi.delete(c.id);
-    if(res.success){showToast("Deleted.");load();}
+    askConfirm(
+      "Delete Coupon",
+      `Delete coupon "${c.code}"? This cannot be undone.`,
+      async () => {
+        const res = await adminCouponsApi.delete(c.id);
+        if (res.success) { showToast("Deleted."); load(); }
+      }
+    );
   }
 
   const f=(k:keyof AdminCoupon)=>(e:React.ChangeEvent<HTMLInputElement|HTMLSelectElement>)=>setForm(x=>({...x,[k]:e.target.value}));
@@ -132,6 +148,24 @@ function CouponsPage() {
           </div>
         </div>
       )}
+      <AlertDialog open={confirmState.open} onOpenChange={open => setConfirmState(s => ({ ...s, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmState.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmState.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => { confirmState.onConfirm(); setConfirmState(s => ({ ...s, open: false })); }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <style>{`.lbl{display:block;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.inp{width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;transition:border-color .15s}.inp:focus{border-color:#1f5c3a}`}</style>
     </div>
   );

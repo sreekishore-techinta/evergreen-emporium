@@ -91,8 +91,8 @@ export interface AdminOrder {
 }
 
 export interface AdminOrderItem {
-  id: number; product_name: string; product_sku: string; product_image: string | null;
-  quantity: number; unit_price: number; line_total: number;
+  id: number; product_id: number | null; product_name: string; product_sku: string;
+  product_image: string | null; quantity: number; unit_price: number; line_total: number;
 }
 
 export interface AdminCustomer {
@@ -110,6 +110,19 @@ export interface AdminReview {
   id: number; product_id: number; user_id: number; rating: number;
   title: string | null; body: string | null; status: string;
   created_at: string; user_name: string; product_name: string;
+}
+
+export interface StockMovement {
+  id: number;
+  product_id: number;
+  delta: number;          // positive = in, negative = out
+  stock_after: number;
+  reason: "order_placed" | "order_cancelled" | "manual_adjustment" | "product_created";
+  reference_id: number | null;   // order id for order events
+  notes: string | null;
+  admin_id: number | null;
+  admin_name: string | null;
+  created_at: string;
 }
 
 export interface Pagination {
@@ -196,8 +209,9 @@ export const adminCategoriesApi = {
 export const adminOrdersApi = {
   list:          (p?: Record<string, string | number | undefined>) => adminPaged<AdminOrder>("/api/admin/orders", p),
   get:           (id: number) => adminRequest<AdminOrder>("GET", `/api/admin/orders/${id}`),
-  updateStatus:  (id: number, status: string) => adminRequest("PATCH", `/api/admin/orders/${id}/status`, { status }),
-  updatePayment: (id: number, payment_status: string) => adminRequest("PATCH", `/api/admin/orders/${id}/payment-status`, { payment_status }),
+  updateStatus:  (id: number, status: string) => adminRequest<AdminOrder>("PATCH", `/api/admin/orders/${id}/status`, { status }),
+  updatePayment: (id: number, payment_status: string) => adminRequest<AdminOrder>("PATCH", `/api/admin/orders/${id}/payment-status`, { payment_status }),
+  cancel:        (id: number) => adminRequest<AdminOrder>("POST",  `/api/admin/orders/${id}/cancel`),
 };
 
 export const adminCustomersApi = {
@@ -217,6 +231,15 @@ export const adminReviewsApi = {
   list:         (p?: Record<string, string | number | undefined>) => adminPaged<AdminReview>("/api/admin/reviews", p),
   updateStatus: (id: number, status: string) => adminRequest("PATCH", `/api/admin/reviews/${id}/status`, { status }),
   delete:       (id: number) => adminRequest("DELETE", `/api/admin/reviews/${id}`),
+};
+
+export const adminStockApi = {
+  adjust:  (productId: number, delta: number, notes?: string) =>
+    adminRequest<{ product_id: number; delta: number; stock: number }>(
+      "PATCH", `/api/admin/products/${productId}/stock`, { delta, notes }
+    ),
+  history: (productId: number, limit = 30) =>
+    adminRequest<StockMovement[]>("GET", `/api/admin/products/${productId}/stock/history?limit=${limit}`),
 };
 
 export const adminDashboardApi = {
