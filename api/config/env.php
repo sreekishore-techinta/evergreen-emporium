@@ -26,28 +26,39 @@ function _detect_app_url(): string {
 }
 
 // ── Database ──────────────────────────────────────────────────────
-// Auto-detect Hostinger production environment and set correct credentials.
-// This prevents needing a separate env.local.php on the live server.
+// IMPORTANT: Detection is fail-safe — we treat as LOCAL only when the host is
+// explicitly a localhost/loopback address. Any other host (including custom
+// domains on Hostinger) falls through to PRODUCTION credentials.
+// This prevents a silent fallback to local root credentials when a custom
+// domain is used on Hostinger that doesn't match the old allowlist.
 $_host = $_SERVER['HTTP_HOST'] ?? '';
-$_isProduction = (
-    strpos($_host, 'hostingersite.com') !== false ||
-    strpos($_host, 'evergreenmedia.in') !== false
+
+// Detect local development: localhost, 127.0.0.1, ::1, or any *.local / *.test domain
+$_isLocal = (
+    $_host === 'localhost'                  ||
+    strpos($_host, 'localhost:') === 0      ||
+    $_host === '127.0.0.1'                 ||
+    $_host === '[::1]'                     ||
+    substr($_host, -6) === '.local'        ||
+    substr($_host, -5) === '.test'
 );
 
 if (!defined('DB_HOST'))    define('DB_HOST',    getenv('DB_HOST')  ?: 'localhost');
 if (!defined('DB_PORT'))    define('DB_PORT',    getenv('DB_PORT')  ?: '3306');
 if (!defined('DB_CHARSET')) define('DB_CHARSET', 'utf8mb4');
 
-if ($_isProduction) {
-    // ── Hostinger / live production credentials ────────────────────
-    if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'u910074219_evergreen');
-    if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'u910074219_evergreen');
-    if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: 'Techinta@2026');
-} else {
+if ($_isLocal) {
     // ── Local XAMPP defaults ───────────────────────────────────────
     if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'evergreen_emporium');
     if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'root');
     if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: '');
+} else {
+    // ── Hostinger / live production credentials ────────────────────
+    // Used for ALL non-localhost hosts: hostingersite.com, evergreenmedia.in,
+    // custom domains, www subdomain, etc.
+    if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'u910074219_evergreen');
+    if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'u910074219_evergreen');
+    if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: 'Techinta@2026');
 }
 
 // ── App ───────────────────────────────────────────────────────────
