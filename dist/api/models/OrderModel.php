@@ -92,12 +92,16 @@ class OrderModel extends BaseModel {
             $orderId = (int)$this->db->lastInsertId();
 
             // Back-fill reference_id on the stock_movements we just logged
-            $this->db->prepare(
-                "UPDATE stock_movements
-                 SET reference_id=?, notes=CONCAT('Order #', ?)
-                 WHERE reference_id IS NULL AND reason='order_placed'
-                   AND created_at >= DATE_SUB(NOW(), INTERVAL 5 SECOND)"
-            )->execute([$orderId, $orderId]);
+            try {
+                $this->db->prepare(
+                    "UPDATE stock_movements
+                     SET reference_id=?, notes=CONCAT('Order #', ?)
+                     WHERE reference_id IS NULL AND reason='order_placed'
+                       AND created_at >= DATE_SUB(NOW(), INTERVAL 5 SECOND)"
+                )->execute([$orderId, $orderId]);
+            } catch (Throwable $e) {
+                // Pre-migration: stock_movements table missing — non-fatal
+            }
 
             foreach ($itemsToInsert as $item) {
                 $this->db->prepare(
@@ -304,7 +308,7 @@ class OrderModel extends BaseModel {
                    (product_id, delta, stock_after, reason, reference_id, notes, admin_id)
                  VALUES (?,?,?,?,?,?,?)"
             )->execute([$productId, $delta, $stockAfter, $reason, $referenceId, $notes, $adminId]);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             // Non-fatal — if the table doesn't exist yet (pre-migration), silently skip
         }
     }
@@ -379,7 +383,7 @@ class OrderModel extends BaseModel {
             );
             $stmt->execute([$productId, $limit]);
             return $stmt->fetchAll();
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             return [];
         }
     }

@@ -64,13 +64,13 @@ class ProductModel extends BaseModel {
             $where[] = 'p.stock = 0';
         }
 
-        $sort = match($filters['sort'] ?? 'default') {
-            'price_asc'   => 'p.price ASC',
-            'price_desc'  => 'p.price DESC',
-            'rating'      => 'p.rating DESC',
-            'newest'      => 'p.created_at DESC',
-            default       => 'p.sort_order ASC, p.id ASC',
-        };
+        $sort = 'p.sort_order ASC, p.id ASC';
+        switch ($filters['sort'] ?? 'default') {
+            case 'price_asc':  $sort = 'p.price ASC';        break;
+            case 'price_desc': $sort = 'p.price DESC';       break;
+            case 'rating':     $sort = 'p.rating DESC';      break;
+            case 'newest':     $sort = 'p.created_at DESC';  break;
+        }
 
         $sql = "SELECT p.*, c.name AS category_name, c.slug AS category_slug
                 FROM products p
@@ -264,7 +264,7 @@ class ProductModel extends BaseModel {
                    (product_id, delta, stock_after, reason, reference_id, notes, admin_id)
                  VALUES (?,?,?,?,?,?,?)"
             )->execute([$productId, $delta, $stockAfter, $reason, $referenceId, $notes, $adminId]);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             // Pre-migration: table missing — non-fatal
         }
     }
@@ -284,7 +284,7 @@ class ProductModel extends BaseModel {
             );
             $stmt->execute([$productId, $limit]);
             return $stmt->fetchAll();
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             return [];
         }
     }
